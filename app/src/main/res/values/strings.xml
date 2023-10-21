@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">World News</string>
+    <string name="logo">Logo Application</string>
+    <string name="login" translatable="false">Login</string>
+    <string name="email" translatable="false">E-mail</string>
+    <string name="password" translatable="false">Password</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="txt_or">OR</string>
+    <string name="google_login">Login with Google</string>
+    <string name="new_account">New to World News?</string>
+    <string name="register">Register</string>
+
+    <string name="country">Country of interest</string>
+    <string name="topic">Topic of interest</string>
+    <string-array name="country_array">
+        <item>Italy</item>
+        <item>France</item>
+        <item>Germany</item>
+        <item>Spain</item>
+        <item>US</item>
+    </string-array>
+    <string name="business">Business</string>
+    <string name="entertainment">Entertainment</string>
+    <string name="general">General</string>
+    <string name="health">Health</string>
+    <string name="science">Science</string>
+    <string name="sports">Sports</string>
+    <string name="technology">Technology</string>
+    <string name="next">Next</string>
+</resources>
