@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/fragment_country_news"
+        android:enabled="true"
+        android:icon="@drawable/ic_globe"
+        android:title="@string/country_news" />
+    <item
+        android:id="@+id/fragment_topic_news"
+        android:enabled="true"
+        android:icon="@drawable/ic_baseline_topic_24"
+        android:title="@string/topic_news"/>
+    <item
+        android:id="@+id/fragment_favorite_news"
+        android:enabled="true"
+        android:icon="@drawable/ic_baseline_favorite_24"
+        android:title="@string/favorite_news"/>
+    <item
+        android:id="@+id/fragment_settings"
+        android:enabled="true"
+        android:icon="@drawable/ic_baseline_settings_24"
+        android:title="@string/settings"/>
+</menu>
