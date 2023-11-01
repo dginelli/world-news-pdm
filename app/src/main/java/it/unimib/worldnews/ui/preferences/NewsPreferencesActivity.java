@@ -1,4 +1,4 @@
-package it.unimib.worldnews.ui;
+package it.unimib.worldnews.ui.preferences;
 
 import static it.unimib.worldnews.util.Constants.BUSINESS;
 import static it.unimib.worldnews.util.Constants.ENTERTAINMENT;
@@ -16,25 +16,34 @@ import static it.unimib.worldnews.util.Constants.TECHNOLOGY;
 import static it.unimib.worldnews.util.Constants.UNITED_KINGDOM;
 import static it.unimib.worldnews.util.Constants.UNITED_STATES;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
-import android.content.Context;
-import android.content.SharedPreferences;
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.Spinner;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.GregorianCalendar;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import it.unimib.worldnews.R;
 import it.unimib.worldnews.model.News;
+import it.unimib.worldnews.ui.main.MainActivityWithBottomNavigationView;
+import it.unimib.worldnews.util.SharedPreferencesUtil;
 
 /**
  * Activity to allow user to choose her news preferences.
@@ -43,8 +52,8 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
     private static final String TAG = NewsPreferencesActivity.class.getSimpleName();
 
-    static final String EXTRA_BUTTON_PRESSED_COUNTER_KEY = "BUTTON_PRESSED_COUNTER_KEY";
-    static final String EXTRA_NEWS_KEY = "NEWS_KEY";
+    public static final String EXTRA_BUTTON_PRESSED_COUNTER_KEY = "BUTTON_PRESSED_COUNTER_KEY";
+    public static final String EXTRA_NEWS_KEY = "NEWS_KEY";
 
     private Spinner spinnerCountries;
     private CheckBox checkboxBusiness;
@@ -57,6 +66,19 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
     private int buttonNextPressedCounter;
     private News news;
+
+    private ActivityResultLauncher<String> singlePermissionLauncher;
+    private ActivityResultContracts.RequestPermission singlePermissionContract;
+
+    private ActivityResultLauncher<String[]> multiplePermissionLauncher;
+    private ActivityResultContracts.RequestMultiplePermissions multiplePermissionsContract;
+
+    private final String[] PERMISSIONS = {
+            Manifest.permission.SEND_SMS,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+    };
+
+    private FusedLocationProviderClient fusedLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,12 +98,13 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
         final Button buttonNext = findViewById(R.id.button_next);
 
+        // Doc is here: https://developer.android.com/training/location/retrieve-current
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
         if (savedInstanceState != null) {
             buttonNextPressedCounter = savedInstanceState.getInt(EXTRA_BUTTON_PRESSED_COUNTER_KEY);
             news = savedInstanceState.getParcelable(EXTRA_NEWS_KEY);
-            if (news != null) {
-                Log.d(TAG, "savedInstanceState is not null, news: " + news);
-            }
+            Log.d(TAG, "savedInstanceState is not null, news: " + news.toString());
         } else {
             news = new News("Button next has been pressed 0 times",
                     "Mario Rossi", "UniMiB",
@@ -92,17 +115,88 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
         setViewsChecked();
 
+        singlePermissionContract = new ActivityResultContracts.RequestPermission();
+        multiplePermissionsContract = new ActivityResultContracts.RequestMultiplePermissions();
+
+        singlePermissionLauncher = registerForActivityResult(singlePermissionContract, isGranted -> {
+            if (isGranted) {
+                // Permission is granted. Continue the action or workflow in your app.
+                Log.d(TAG, "Single permission has been granted");
+                getLocation();
+            } else {
+                // Explain to the user that the feature is unavailable because the feature requires
+                // a permission that the user has denied. At the same time, respect
+                // the user's decision. Don't link to system settings in an effort to convince the
+                // user to change their decision.
+                Log.d(TAG, "Single permission has not been granted");
+            }
+        });
+
+        multiplePermissionLauncher = registerForActivityResult(multiplePermissionsContract, isGranted -> {
+            for(Map.Entry<String, Boolean> set : isGranted.entrySet()) {
+                Log.d(TAG, set.getKey() + " " + set.getValue());
+            }
+            if (!isGranted.containsValue(false)) {
+                Log.d(TAG, "All permission have been granted");
+                getLocation();
+            }
+        });
+
         buttonNext.setOnClickListener(view -> {
+            getLocation();
+            buttonNextPressedCounter++;
+            news.setTitle("Button next has been pressed " + buttonNextPressedCounter + " times");
             if (isCountryOfInterestSelected() && isTopicOfInterestSelected()) {
-                Log.d(TAG, "One country of interest and at least one topic have been chosen");
+                Log.d(TAG, "One country of interest and at least one topic has been chosen");
                 saveInformation();
                 buttonNextPressedCounter++;
                 news.setTitle("Button next has been pressed " + buttonNextPressedCounter + " times");
                 news.setDate(GregorianCalendar.getInstance().getTime().toString());
                 Log.d(TAG, "Button next has been pressed " + buttonNextPressedCounter + " times");
                 Log.d(TAG, "onClick, news: " + news);
+
+                Intent intent = new Intent(this, MainActivityWithBottomNavigationView.class);
+                intent.putExtra(EXTRA_BUTTON_PRESSED_COUNTER_KEY, buttonNextPressedCounter);
+                intent.putExtra(EXTRA_NEWS_KEY, news);
+                startActivity(intent);
+                finish();
             }
         });
+    }
+
+    /**
+     * It finds the last known location of the user.
+     */
+    private void getLocation() {
+
+        boolean singlePermissionsStatus =
+                ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+        boolean multiplePermissionsStatus =
+                ActivityCompat.checkSelfPermission(this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                        ActivityCompat.checkSelfPermission(this,
+                                Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED;
+
+        // Use multiplePermissionsStatus if you want to try the logic
+        // of requesting more than one permission
+        if (singlePermissionsStatus) {
+            Log.d(TAG, "getLocation(): All permissions have been granted");
+            // Doc is here: https://developer.android.com/training/location/retrieve-current
+            fusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(this, location -> {
+                        // Got last known location. In some rare situations this can be null.
+                        if (location != null) {
+                            Log.d(TAG, location.getLatitude() + " " + location.getLongitude());
+                        }
+                    });
+        } else {
+            Log.d(TAG, "One or more permissions have not been granted");
+            // Use multiplePermissionLauncher and PERMISSIONS variable as argument of method launch
+            // if you want to try the logic of requesting more than one permission
+            singlePermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION);
+        }
     }
 
     @Override
@@ -115,7 +209,7 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
     /**
      * Checks if a country of interest has been selected.
-     * @return true if a country has been selected, false otherwise.
+     * @return true if a country has been selected, false otherwise
      */
     private boolean isCountryOfInterestSelected() {
 
@@ -148,24 +242,12 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
     /**
      * Stores the country and the topics of interest chosen by the user
-     * in the file system through the use of SharedPreferences API
+     * in the file system through the use of SharedPreferences API.
      */
     private void saveInformation() {
 
         String country = spinnerCountries.getSelectedItem().toString();
-        String countryShortName = null;
-
-        if (country.equals(getString(R.string.france))) {
-            countryShortName = FRANCE;
-        } else if (country.equals(getString(R.string.germany))) {
-            countryShortName = GERMANY;
-        } else if (country.equals(getString(R.string.italy))) {
-            countryShortName = ITALY;
-        } else if (country.equals(getResources().getString(R.string.united_kingdom))) {
-            countryShortName = UNITED_KINGDOM;
-        } else if (country.equals(getResources().getString(R.string.united_states))) {
-            countryShortName = UNITED_STATES;
-        }
+        String countryShortName = getShortNameCountryOfInterest(country);
 
         Set<String> topics = new HashSet<>();
 
@@ -191,12 +273,13 @@ public class NewsPreferencesActivity extends AppCompatActivity {
             topics.add(TECHNOLOGY);
         }
 
-        SharedPreferences sharedPref = getSharedPreferences(SHARED_PREFERENCES_FILE_NAME,
-                Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putString(SHARED_PREFERENCES_COUNTRY_OF_INTEREST, countryShortName);
-        editor.putStringSet(SHARED_PREFERENCES_TOPICS_OF_INTEREST, topics);
-        editor.apply();
+        SharedPreferencesUtil sharedPreferencesUtil = new SharedPreferencesUtil(this);
+        sharedPreferencesUtil.writeStringData(
+                SHARED_PREFERENCES_FILE_NAME, SHARED_PREFERENCES_COUNTRY_OF_INTEREST,
+                countryShortName);
+
+        sharedPreferencesUtil.writeStringSetData(SHARED_PREFERENCES_FILE_NAME,
+                SHARED_PREFERENCES_TOPICS_OF_INTEREST, topics);
     }
 
     /**
@@ -204,19 +287,17 @@ public class NewsPreferencesActivity extends AppCompatActivity {
      * SharedPreferences file.
      */
     private void setViewsChecked() {
-        SharedPreferences sharedPref = getSharedPreferences(SHARED_PREFERENCES_FILE_NAME,
-                Context.MODE_PRIVATE);
+        SharedPreferencesUtil sharedPreferencesUtil = new SharedPreferencesUtil(this);
 
-        String countryOfInterest = sharedPref.getString(SHARED_PREFERENCES_COUNTRY_OF_INTEREST,
-                null);
-        Set<String> topicsOfInterest = sharedPref.getStringSet(SHARED_PREFERENCES_TOPICS_OF_INTEREST,
+        String countryOfInterest = sharedPreferencesUtil.readStringData(
+                SHARED_PREFERENCES_FILE_NAME, SHARED_PREFERENCES_COUNTRY_OF_INTEREST);
+        Set<String> topicsOfInterest = sharedPreferencesUtil.readStringSetData(
+                SHARED_PREFERENCES_TOPICS_OF_INTEREST,
                 null);
 
         if (countryOfInterest != null) {
             spinnerCountries.setSelection(
-                    getSpinnerPositionBasedOnValue(getCountryOfInterest(countryOfInterest)));
-
-            Log.d(TAG, "Country of interest from SharedPref: " + countryOfInterest);
+                    getSpinnerPositionBasedOnValue(getUserVisibleCountryOfInterest(countryOfInterest)));
         }
 
         if (topicsOfInterest != null) {
@@ -241,8 +322,6 @@ public class NewsPreferencesActivity extends AppCompatActivity {
             if (topicsOfInterest.contains(TECHNOLOGY)) {
                 checkboxTechnology.setChecked(true);
             }
-
-            Log.d(TAG, "Country of interest from SharedPref: " + topicsOfInterest);
         }
     }
 
@@ -266,12 +345,12 @@ public class NewsPreferencesActivity extends AppCompatActivity {
     }
 
     /**
-     * Retrieves the country id to be used with NewsAPI.org.
-     * @param countryOfInterest the country chosen by the user
-     * @return the country id
+     * Gets the country name shown to the user.
+     * @param shortNameCountryOfInterest the country short name used with NewsAPI.org
+     * @return the country name shown to the user
      */
-    private String getCountryOfInterest(String countryOfInterest) {
-        switch (countryOfInterest) {
+    private String getUserVisibleCountryOfInterest(String shortNameCountryOfInterest) {
+        switch (shortNameCountryOfInterest) {
             case FRANCE:
                 return getString(R.string.france);
             case GERMANY:
@@ -285,5 +364,25 @@ public class NewsPreferencesActivity extends AppCompatActivity {
             default:
                 return null;
         }
+    }
+
+    /**
+     * Gets the country short name used with NewsAPI.org
+     * @param userVisibleCountryOfInterest the country name shown to the user
+     * @return the country short name used with NewsAPI.org
+     */
+    private String getShortNameCountryOfInterest(String userVisibleCountryOfInterest) {
+        if (userVisibleCountryOfInterest.equals(getString(R.string.france))) {
+            return FRANCE;
+        } else if (userVisibleCountryOfInterest.equals(getString(R.string.germany))) {
+            return GERMANY;
+        } else if (userVisibleCountryOfInterest.equals(getString(R.string.italy))) {
+            return ITALY;
+        } else if (userVisibleCountryOfInterest.equals(getResources().getString(R.string.united_kingdom))) {
+            return UNITED_KINGDOM;
+        } else if (userVisibleCountryOfInterest.equals(getResources().getString(R.string.united_states))) {
+            return UNITED_STATES;
+        }
+        return null;
     }
 }
