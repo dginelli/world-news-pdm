@@ -39,4 +39,14 @@
     <string name="error_email">Inserisci un indirizzo email valido</string>
     <string name="error_password">La password non può essere vuota</string>
     <string name="check_login_data_message">Controlla i dati inseriti</string>
+
+    <string name="country_news">Mondo</string>
+    <string name="topic_news">Argomento</string>
+    <string name="favorite_news">Preferiti</string>
+    <string name="settings">Impostazioni</string>
+    <string name="delete">Elimina</string>
+    <string name="news">Notizie</string>
+    <string name="personal_area">Area personale</string>
+
+    <string name="nav_drawer_subtitle">Rimani aggiornato sulle notizie dal mondo</string>
 </resources>
