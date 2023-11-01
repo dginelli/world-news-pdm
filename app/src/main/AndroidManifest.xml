@@ -13,18 +13,37 @@
         android:theme="@style/Theme.WorldNews"
         tools:targetApi="31">
         <activity
-            android:name=".ui.WelcomeActivity"
+            android:name=".ui.main.MainActivityWithNavigationDrawer"
+            android:exported="false"
+            android:theme="@style/Widget.App.NavigationView">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
+            android:name=".ui.main.MainActivityWithBottomNavigationView"
+            android:exported="false" >
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
+            android:name=".ui.welcome.WelcomeActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
         </activity>
         <activity
-            android:name=".ui.NewsPreferencesActivity"
-            android:exported="true">
-
+            android:name=".ui.preferences.NewsPreferencesActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
         </activity>
     </application>
 
