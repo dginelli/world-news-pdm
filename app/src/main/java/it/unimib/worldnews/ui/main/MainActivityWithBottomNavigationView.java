@@ -1,5 +1,6 @@
 package it.unimib.worldnews.ui.main;
 
+import static it.unimib.worldnews.ui.preferences.NewsPreferencesActivity.EXTRA_BUNDLE_INT;
 import static it.unimib.worldnews.ui.preferences.NewsPreferencesActivity.EXTRA_BUTTON_PRESSED_COUNTER_KEY;
 import static it.unimib.worldnews.ui.preferences.NewsPreferencesActivity.EXTRA_NEWS_KEY;
 
@@ -52,5 +53,10 @@ public class MainActivityWithBottomNavigationView extends AppCompatActivity {
         Intent intent = getIntent();
         Log.d(TAG, "Times: " + intent.getIntExtra(EXTRA_BUTTON_PRESSED_COUNTER_KEY, 0));
         Log.d(TAG, "News: " + intent.getParcelableExtra(EXTRA_NEWS_KEY));
+
+        Bundle bundle = intent.getExtras();
+        if (bundle != null) {
+            Log.d(TAG, "Int from Bundle " + bundle.getInt(EXTRA_BUNDLE_INT));
+        }
     }
 }

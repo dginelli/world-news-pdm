@@ -54,6 +54,7 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
     public static final String EXTRA_BUTTON_PRESSED_COUNTER_KEY = "BUTTON_PRESSED_COUNTER_KEY";
     public static final String EXTRA_NEWS_KEY = "NEWS_KEY";
+    public static final String EXTRA_BUNDLE_INT = "BUNDLE_INT";
 
     private Spinner spinnerCountries;
     private CheckBox checkboxBusiness;
@@ -158,6 +159,12 @@ public class NewsPreferencesActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, MainActivityWithBottomNavigationView.class);
                 intent.putExtra(EXTRA_BUTTON_PRESSED_COUNTER_KEY, buttonNextPressedCounter);
                 intent.putExtra(EXTRA_NEWS_KEY, news);
+
+                // Example to show another way to add data in an Intent
+                Bundle bundle = new Bundle();
+                bundle.putInt(EXTRA_BUNDLE_INT, 2023);
+                intent.putExtras(bundle);
+
                 startActivity(intent);
                 finish();
             }
