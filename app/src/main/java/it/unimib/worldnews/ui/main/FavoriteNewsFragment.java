@@ -16,6 +16,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.android.material.snackbar.Snackbar;
+
 import it.unimib.worldnews.R;
 
 /**
@@ -65,7 +67,8 @@ public class FavoriteNewsFragment extends Fragment {
             @Override
             public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
                 if (menuItem.getItemId() == R.id.delete) {
-                    Log.d(TAG, "Delete menu item pressed");
+                    Snackbar.make(requireView(), "Delete menu item pressed",
+                                    Snackbar.LENGTH_SHORT).show();
                 }
                 return false;
             }
