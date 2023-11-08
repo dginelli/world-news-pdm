@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="list_size_message">Dimensione lista:\u0020</string> <!-- \u0020 adds a space-->
+</resources>
