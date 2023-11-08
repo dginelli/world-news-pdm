@@ -80,10 +80,11 @@ public class LoginFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        dataEncryptionUtil = new DataEncryptionUtil(requireContext());
+        dataEncryptionUtil = new DataEncryptionUtil(requireActivity().getApplication());
         try {
-            if (!dataEncryptionUtil.readSecretDataOnFile(ENCRYPTED_DATA_FILE_NAME).isEmpty()) {
-                SharedPreferencesUtil sharedPreferencesUtil = new SharedPreferencesUtil(requireContext());
+            if (dataEncryptionUtil.readSecretDataOnFile(ENCRYPTED_DATA_FILE_NAME) != null) {
+                SharedPreferencesUtil sharedPreferencesUtil =
+                        new SharedPreferencesUtil(requireActivity().getApplication());
 
                 if (sharedPreferencesUtil.readStringData(SHARED_PREFERENCES_FILE_NAME,
                         SHARED_PREFERENCES_COUNTRY_OF_INTEREST) != null &&
@@ -106,7 +107,7 @@ public class LoginFragment extends Fragment {
         final Button buttonLogin = view.findViewById(R.id.button_login);
         final Button buttonGoogleLogin = view.findViewById(R.id.button_google_login);
 
-        dataEncryptionUtil = new DataEncryptionUtil(requireContext());
+        dataEncryptionUtil = new DataEncryptionUtil(requireActivity().getApplication());
 
         try {
             Log.d(TAG, "Email address from encrypted SharedPref: " + dataEncryptionUtil.
@@ -141,11 +142,11 @@ public class LoginFragment extends Fragment {
 
         buttonGoogleLogin.setOnClickListener(v ->
                 startActivityBasedOnCondition(MainActivityWithNavigationDrawer.class,
-                R.id.navigate_to_mainActivityWithNavigationDrawer));
+                        R.id.navigate_to_mainActivityWithNavigationDrawer));
     }
 
     /**
-     * It starts another Activity using Intent or NavigationComponent.
+     * Starts another Activity using Intent or NavigationComponent.
      * @param destinationActivity The class of Activity to start.
      * @param destination The ID associated with the action defined in welcome_nav_graph.xml.
      */

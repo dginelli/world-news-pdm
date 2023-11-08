@@ -42,6 +42,7 @@ import java.util.Set;
 
 import it.unimib.worldnews.R;
 import it.unimib.worldnews.model.News;
+import it.unimib.worldnews.model.NewsSource;
 import it.unimib.worldnews.ui.main.MainActivityWithBottomNavigationView;
 import it.unimib.worldnews.util.SharedPreferencesUtil;
 
@@ -107,11 +108,11 @@ public class NewsPreferencesActivity extends AppCompatActivity {
             news = savedInstanceState.getParcelable(EXTRA_NEWS_KEY);
             Log.d(TAG, "savedInstanceState is not null, news: " + news.toString());
         } else {
-            news = new News("Button next has been pressed 0 times",
-                    "Mario Rossi", "UniMiB",
+            news = new News("Mario Rossi", "Button next has been pressed 0 times",
+                    new NewsSource("UniMiB"),
                     GregorianCalendar.getInstance().getTime().toString());
 
-            Log.d(TAG, "savedInstanceState is null, news: " + news);
+            Log.d(TAG, "savedInstanceState is null, News: " + news);
         }
 
         setViewsChecked();
@@ -154,7 +155,7 @@ public class NewsPreferencesActivity extends AppCompatActivity {
                 news.setTitle("Button next has been pressed " + buttonNextPressedCounter + " times");
                 news.setDate(GregorianCalendar.getInstance().getTime().toString());
                 Log.d(TAG, "Button next has been pressed " + buttonNextPressedCounter + " times");
-                Log.d(TAG, "onClick, news: " + news);
+                Log.d(TAG, "onClick, News: " + news);
 
                 Intent intent = new Intent(this, MainActivityWithBottomNavigationView.class);
                 intent.putExtra(EXTRA_BUTTON_PRESSED_COUNTER_KEY, buttonNextPressedCounter);
@@ -178,7 +179,7 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
         boolean singlePermissionsStatus =
                 ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+                        Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
 
         boolean multiplePermissionsStatus =
                 ActivityCompat.checkSelfPermission(this,
@@ -280,7 +281,7 @@ public class NewsPreferencesActivity extends AppCompatActivity {
             topics.add(TECHNOLOGY);
         }
 
-        SharedPreferencesUtil sharedPreferencesUtil = new SharedPreferencesUtil(this);
+        SharedPreferencesUtil sharedPreferencesUtil = new SharedPreferencesUtil(getApplication());
         sharedPreferencesUtil.writeStringData(
                 SHARED_PREFERENCES_FILE_NAME, SHARED_PREFERENCES_COUNTRY_OF_INTEREST,
                 countryShortName);
@@ -294,7 +295,7 @@ public class NewsPreferencesActivity extends AppCompatActivity {
      * SharedPreferences file.
      */
     private void setViewsChecked() {
-        SharedPreferencesUtil sharedPreferencesUtil = new SharedPreferencesUtil(this);
+        SharedPreferencesUtil sharedPreferencesUtil = new SharedPreferencesUtil(getApplication());
 
         String countryOfInterest = sharedPreferencesUtil.readStringData(
                 SHARED_PREFERENCES_FILE_NAME, SHARED_PREFERENCES_COUNTRY_OF_INTEREST);

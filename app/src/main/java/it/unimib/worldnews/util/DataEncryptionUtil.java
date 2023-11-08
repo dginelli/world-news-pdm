@@ -1,5 +1,6 @@
 package it.unimib.worldnews.util;
 
+import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -23,8 +24,8 @@ public class DataEncryptionUtil {
 
     private final Context context;
 
-    public DataEncryptionUtil(Context context) {
-        this.context = context;
+    public DataEncryptionUtil(Application application) {
+        this.context = application.getApplicationContext();
     }
 
     /**
@@ -133,21 +134,26 @@ public class DataEncryptionUtil {
         MasterKey mainKey = new MasterKey.Builder(context)
                 .setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build();
 
+        File file = new File(context.getFilesDir(), fileName);
+
         EncryptedFile encryptedFile = new EncryptedFile.Builder(context,
-                new File(context.getFilesDir(), fileName),
+                file,
                 mainKey,
                 EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
         ).build();
 
-        InputStream inputStream = encryptedFile.openFileInput();
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        int nextByte = inputStream.read();
-        while (nextByte != -1) {
-            byteArrayOutputStream.write(nextByte);
-            nextByte = inputStream.read();
-        }
+        if (file.exists()) {
+            InputStream inputStream = encryptedFile.openFileInput();
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            int nextByte = inputStream.read();
+            while (nextByte != -1) {
+                byteArrayOutputStream.write(nextByte);
+                nextByte = inputStream.read();
+            }
 
-        byte[] plaintext = byteArrayOutputStream.toByteArray();
-        return new String(plaintext, StandardCharsets.UTF_8);
+            byte[] plaintext = byteArrayOutputStream.toByteArray();
+            return new String(plaintext, StandardCharsets.UTF_8);
+        }
+        return null;
     }
 }
