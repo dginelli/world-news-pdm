@@ -32,4 +32,7 @@ public class Constants {
 
     // Constants for encrypted files
     public static final String ENCRYPTED_DATA_FILE_NAME = "it.unimib.worldnews.encrypted_file.txt";
+
+    // Constants for files contained in assets folder
+    public static final String NEWS_API_TEST_JSON_FILE = "newsapi-test.json";
 }
