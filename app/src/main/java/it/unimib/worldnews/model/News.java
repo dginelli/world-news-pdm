@@ -3,28 +3,38 @@ package it.unimib.worldnews.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
- * Class to represent news.
+ * Class to represent the news of NewsAPI.org (<a href="https://newsapi.org">...</a>)
  */
 public class News implements Parcelable {
-    private String title;
     private String author;
-    private String source;
+    private String title;
+    private NewsSource source;
+    private String description;
+    private String url;
+    private String urlToImage;
+    @SerializedName("publishedAt")
     private String date;
+    private String content;
 
-    public News(String title, String author, String source, String date) {
-        this.title = title;
+    public News() {}
+
+    public News(String author, String title, NewsSource source, String description, String url,
+                String urlToImage, String date, String content) {
         this.author = author;
-        this.source = source;
-        this.date = date;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
         this.title = title;
+        this.source = source;
+        this.description = description;
+        this.url = url;
+        this.urlToImage = urlToImage;
+        this.date = date;
+        this.content = content;
+    }
+
+    public News(String author, String title, NewsSource source, String date) {
+        this(author, title, source, null, null, null, date, null);
     }
 
     public String getAuthor() {
@@ -35,12 +45,44 @@ public class News implements Parcelable {
         this.author = author;
     }
 
-    public String getSource() {
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public NewsSource getSource() {
         return source;
     }
 
-    public void setSource(String source) {
+    public void setSource(NewsSource source) {
         this.source = source;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getUrlToImage() {
+        return urlToImage;
+    }
+
+    public void setUrlToImage(String urlToImage) {
+        this.urlToImage = urlToImage;
     }
 
     public String getDate() {
@@ -51,16 +93,27 @@ public class News implements Parcelable {
         this.date = date;
     }
 
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
     @Override
     public String toString() {
         return "News{" +
-                "title='" + title + '\'' +
-                ", author='" + author + '\'' +
-                ", source='" + source + '\'' +
+                "author='" + author + '\'' +
+                ", title='" + title + '\'' +
+                ", source=" + source +
+                ", description='" + description + '\'' +
+                ", url='" + url + '\'' +
+                ", urlToImage='" + urlToImage + '\'' +
                 ", date='" + date + '\'' +
+                ", content='" + content + '\'' +
                 '}';
     }
-
 
     @Override
     public int describeContents() {
@@ -69,27 +122,39 @@ public class News implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(this.title);
         dest.writeString(this.author);
-        dest.writeString(this.source);
+        dest.writeString(this.title);
+        dest.writeParcelable(this.source, flags);
+        dest.writeString(this.description);
+        dest.writeString(this.url);
+        dest.writeString(this.urlToImage);
         dest.writeString(this.date);
+        dest.writeString(this.content);
     }
 
     public void readFromParcel(Parcel source) {
-        this.title = source.readString();
         this.author = source.readString();
-        this.source = source.readString();
+        this.title = source.readString();
+        this.source = source.readParcelable(NewsSource.class.getClassLoader());
+        this.description = source.readString();
+        this.url = source.readString();
+        this.urlToImage = source.readString();
         this.date = source.readString();
+        this.content = source.readString();
     }
 
     protected News(Parcel in) {
-        this.title = in.readString();
         this.author = in.readString();
-        this.source = in.readString();
+        this.title = in.readString();
+        this.source = in.readParcelable(NewsSource.class.getClassLoader());
+        this.description = in.readString();
+        this.url = in.readString();
+        this.urlToImage = in.readString();
         this.date = in.readString();
+        this.content = in.readString();
     }
 
-    public static final Creator<News> CREATOR = new Creator<News>() {
+    public static final Parcelable.Creator<News> CREATOR = new Parcelable.Creator<News>() {
         @Override
         public News createFromParcel(Parcel source) {
             return new News(source);
