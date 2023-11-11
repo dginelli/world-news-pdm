@@ -8,9 +8,14 @@ import static it.unimib.worldnews.util.Constants.SHARED_PREFERENCES_COUNTRY_OF_I
 import static it.unimib.worldnews.util.Constants.SHARED_PREFERENCES_FILE_NAME;
 import static it.unimib.worldnews.util.Constants.SHARED_PREFERENCES_TOPICS_OF_INTEREST;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -49,6 +54,22 @@ public class LoginFragment extends Fragment {
     private TextInputLayout textInputLayoutPassword;
 
     private DataEncryptionUtil dataEncryptionUtil;
+
+    ActivityResultLauncher<Intent> mStartForResult = registerForActivityResult(
+        new ActivityResultContracts.StartActivityForResult(),
+        new ActivityResultCallback<ActivityResult>() {
+            @Override
+            public void onActivityResult(ActivityResult result) {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    Intent intent = result.getData();
+                    if (intent != null) {
+                        String resultFromActivity = intent.getStringExtra("ACTIVITY_FOR_RESULT");
+                        Log.d(TAG, "Result: " + resultFromActivity);
+                    }
+                }
+            }
+        }
+    );
 
     public LoginFragment() {
         // Required empty public constructor
@@ -143,6 +164,11 @@ public class LoginFragment extends Fragment {
         buttonGoogleLogin.setOnClickListener(v ->
                 startActivityBasedOnCondition(MainActivityWithNavigationDrawer.class,
                         R.id.navigate_to_mainActivityWithNavigationDrawer));
+
+        final Button forgotPasswordButton = view.findViewById(R.id.button_forgot_password);
+        forgotPasswordButton.setOnClickListener(button -> {
+            mStartForResult.launch(new Intent(requireActivity(), NewsPreferencesActivity.class));
+        });
     }
 
     /**

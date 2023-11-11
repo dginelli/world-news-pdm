@@ -23,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -145,6 +146,15 @@ public class NewsPreferencesActivity extends AppCompatActivity {
         });
 
         buttonNext.setOnClickListener(view -> {
+
+            // This is an example to send back the result when the Activity is started for getting a result back
+            Intent intentForResult = getIntent();
+            if (intentForResult != null) {
+                intentForResult.putExtra("ACTIVITY_FOR_RESULT", spinnerCountries.getSelectedItem().toString());
+                setResult(Activity.RESULT_OK, intentForResult);
+                finish();
+            }
+
             getLocation();
             buttonNextPressedCounter++;
             news.setTitle("Button next has been pressed " + buttonNextPressedCounter + " times");
