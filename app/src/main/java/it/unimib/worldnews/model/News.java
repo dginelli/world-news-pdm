@@ -3,26 +3,45 @@ package it.unimib.worldnews.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import androidx.room.ColumnInfo;
+import androidx.room.Embedded;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Objects;
+
 /**
- * Class to represent the news of NewsAPI.org (<a href="https://newsapi.org">...</a>)
+ * Class to represent the news of NewsAPI.org (https://newsapi.org)
  */
+@Entity
 public class News implements Parcelable {
+
+    // Used for Room
+    @PrimaryKey(autoGenerate = true)
+    private long id;
+
     private String author;
     private String title;
+    @Embedded(prefix = "source_")
     private NewsSource source;
     private String description;
     private String url;
+    @ColumnInfo(name = "url_to_image")
     private String urlToImage;
     @SerializedName("publishedAt")
+    @ColumnInfo(name = "published_at")
     private String date;
     private String content;
+
+    @ColumnInfo(name = "is_favorite")
+    private boolean isFavorite;
 
     public News() {}
 
     public News(String author, String title, NewsSource source, String description, String url,
-                String urlToImage, String date, String content) {
+                String urlToImage, String date, String content, boolean isFavorite) {
         this.author = author;
         this.title = title;
         this.source = source;
@@ -31,10 +50,20 @@ public class News implements Parcelable {
         this.urlToImage = urlToImage;
         this.date = date;
         this.content = content;
+        this.isFavorite = isFavorite;
     }
 
     public News(String author, String title, NewsSource source, String date) {
-        this(author, title, source, null, null, null, date, null);
+        this(author, title, source, null, null, null, date,
+                null, false);
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 
     public String getAuthor() {
@@ -101,10 +130,19 @@ public class News implements Parcelable {
         this.content = content;
     }
 
+    public boolean isFavorite() {
+        return isFavorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        isFavorite = favorite;
+    }
+
     @Override
     public String toString() {
         return "News{" +
-                "author='" + author + '\'' +
+                "id=" + id +
+                ", author='" + author + '\'' +
                 ", title='" + title + '\'' +
                 ", source=" + source +
                 ", description='" + description + '\'' +
@@ -112,7 +150,21 @@ public class News implements Parcelable {
                 ", urlToImage='" + urlToImage + '\'' +
                 ", date='" + date + '\'' +
                 ", content='" + content + '\'' +
+                ", isFavorite=" + isFavorite +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        News news = (News) o;
+        return Objects.equals(author, news.author) && Objects.equals(title, news.title) && Objects.equals(source, news.source) && Objects.equals(description, news.description) && Objects.equals(url, news.url) && Objects.equals(urlToImage, news.urlToImage) && Objects.equals(date, news.date) && Objects.equals(content, news.content);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(author, title, source, description, url, urlToImage, date, content);
     }
 
     @Override
@@ -122,6 +174,7 @@ public class News implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this.id);
         dest.writeString(this.author);
         dest.writeString(this.title);
         dest.writeParcelable(this.source, flags);
@@ -130,9 +183,11 @@ public class News implements Parcelable {
         dest.writeString(this.urlToImage);
         dest.writeString(this.date);
         dest.writeString(this.content);
+        dest.writeByte(this.isFavorite ? (byte) 1 : (byte) 0);
     }
 
     public void readFromParcel(Parcel source) {
+        this.id = source.readLong();
         this.author = source.readString();
         this.title = source.readString();
         this.source = source.readParcelable(NewsSource.class.getClassLoader());
@@ -141,9 +196,11 @@ public class News implements Parcelable {
         this.urlToImage = source.readString();
         this.date = source.readString();
         this.content = source.readString();
+        this.isFavorite = source.readByte() != 0;
     }
 
     protected News(Parcel in) {
+        this.id = in.readLong();
         this.author = in.readString();
         this.title = in.readString();
         this.source = in.readParcelable(NewsSource.class.getClassLoader());
@@ -152,6 +209,7 @@ public class News implements Parcelable {
         this.urlToImage = in.readString();
         this.date = in.readString();
         this.content = in.readString();
+        this.isFavorite = in.readByte() != 0;
     }
 
     public static final Parcelable.Creator<News> CREATOR = new Parcelable.Creator<News>() {
