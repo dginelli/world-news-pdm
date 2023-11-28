@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -15,6 +16,7 @@ import java.util.List;
 
 import it.unimib.worldnews.R;
 import it.unimib.worldnews.model.News;
+import it.unimib.worldnews.util.DateTimeUtil;
 
 /**
  * Custom adapter that extends ArrayAdapter to show an ArrayList of News.
@@ -23,22 +25,22 @@ public class NewsListAdapter extends ArrayAdapter<News> {
 
     private final List<News> newsList;
     private final int layout;
-    private final OnDeleteButtonClickListener onDeleteButtonClickListener;
+    private final OnFavoriteButtonClickListener onFavoriteButtonClickListener;
 
     /**
      * Interface to associate a listener to other elements defined in the layout
      * chosen for the ListView item (e.g., a Button).
      */
-    public interface OnDeleteButtonClickListener {
-        void onDeleteButtonClick(News news);
+    public interface OnFavoriteButtonClickListener {
+        void onFavoriteButtonClick(News news);
     }
 
     public NewsListAdapter(@NonNull Context context, int layout, @NonNull List<News> newsList,
-                           OnDeleteButtonClickListener onDeleteButtonClickListener) {
+                           OnFavoriteButtonClickListener onDeleteButtonClickListener) {
         super(context, layout, newsList);
         this.layout = layout;
         this.newsList = newsList;
-        this.onDeleteButtonClickListener = onDeleteButtonClickListener;
+        this.onFavoriteButtonClickListener = onDeleteButtonClickListener;
     }
 
     @NonNull
@@ -50,19 +52,18 @@ public class NewsListAdapter extends ArrayAdapter<News> {
         }
 
         TextView textViewTitle = convertView.findViewById(R.id.textview_title);
-        TextView textViewAuthor = convertView.findViewById(R.id.textview_author);
-        Button buttonDelete = convertView.findViewById(R.id.button_delete);
+        TextView textViewDate = convertView.findViewById(R.id.textview_date);
+        ImageView imageViewFavoriteNews = convertView.findViewById(R.id.imageview_favorite_news);
+
+        imageViewFavoriteNews.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onFavoriteButtonClickListener.onFavoriteButtonClick(newsList.get(position));
+            }
+        });
 
         textViewTitle.setText(newsList.get(position).getTitle());
-        textViewAuthor.setText(newsList.get(position).getAuthor());
-
-        buttonDelete.setOnClickListener(v -> {
-            News news = newsList.get(position);
-            newsList.remove(news);
-            // Call this method to refresh the UI and update the content of ListView
-            notifyDataSetChanged();
-            onDeleteButtonClickListener.onDeleteButtonClick(news);
-        });
+        textViewDate.setText(DateTimeUtil.getDate(newsList.get(position).getDate()));
 
         return convertView;
     }

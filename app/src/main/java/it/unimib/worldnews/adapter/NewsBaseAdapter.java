@@ -4,13 +4,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.appcompat.content.res.AppCompatResources;
 
 import java.util.List;
 
 import it.unimib.worldnews.R;
 import it.unimib.worldnews.model.News;
+import it.unimib.worldnews.util.DateTimeUtil;
 
 /**
  * Custom adapter that extends BaseAdapter to show a list of News.
@@ -46,21 +49,24 @@ public class NewsBaseAdapter extends BaseAdapter {
 
         if (convertView == null) {
             convertView = LayoutInflater.from(parent.getContext()).
-                    inflate(R.layout.fav_news_list_item, parent, false);
+                    inflate(R.layout.news_list_item, parent, false);
         }
 
         TextView textViewTitle = convertView.findViewById(R.id.textview_title);
-        TextView textViewAuthor = convertView.findViewById(R.id.textview_author);
-        Button buttonDelete = convertView.findViewById(R.id.button_delete);
+        TextView textViewDate = convertView.findViewById(R.id.textview_date);
+        ImageView imageViewFavoriteNews = convertView.findViewById(R.id.imageview_favorite_news);
+
+        imageViewFavoriteNews.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                imageViewFavoriteNews.setImageDrawable(
+                        AppCompatResources.getDrawable(parent.getContext(),
+                                R.drawable.ic_baseline_favorite_border_24));
+            }
+        });
 
         textViewTitle.setText(newsList.get(position).getTitle());
-        textViewAuthor.setText(newsList.get(position).getAuthor());
-
-        buttonDelete.setOnClickListener(v -> {
-            newsList.remove(position);
-            // Call this method to refresh the UI and update the content of ListView
-            notifyDataSetChanged();
-        });
+        textViewDate.setText(DateTimeUtil.getDate(newsList.get(position).getDate()));
 
         return convertView;
     }
