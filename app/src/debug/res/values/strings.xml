@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="list_size_message">List size:\u0020</string> <!-- \u0020 adds a space-->
+    <string name="data_read_from_local_database">Data read from the local database</string>
+    <string name="news_list_item_title">Title News</string>
+    <string name="news_list_item_date">25–11–2022 12:27 PM</string>
 </resources>

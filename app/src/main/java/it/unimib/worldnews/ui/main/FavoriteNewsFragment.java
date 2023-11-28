@@ -1,7 +1,5 @@
 package it.unimib.worldnews.ui.main;
 
-import static it.unimib.worldnews.util.Constants.NEWS_API_TEST_JSON_FILE;
-
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -19,12 +17,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 
 import com.google.android.material.snackbar.Snackbar;
 
-import org.json.JSONException;
-
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import it.unimib.worldnews.R;
@@ -32,18 +29,23 @@ import it.unimib.worldnews.adapter.NewsArrayAdapter;
 import it.unimib.worldnews.adapter.NewsBaseAdapter;
 import it.unimib.worldnews.adapter.NewsListAdapter;
 import it.unimib.worldnews.model.News;
-import it.unimib.worldnews.util.JSONParserUtil;
+import it.unimib.worldnews.repository.INewsRepository;
+import it.unimib.worldnews.repository.NewsRepository;
+import it.unimib.worldnews.util.ResponseCallback;
 
 /**
  * Fragment that shows the favorite news of the user.
  */
-public class FavoriteNewsFragment extends Fragment {
+public class FavoriteNewsFragment extends Fragment implements ResponseCallback {
 
     private static final String TAG = FavoriteNewsFragment.class.getSimpleName();
 
     private ListView listViewFavNews;
     private News[] newsArray;
     private List<News> newsList;
+    private INewsRepository iNewsRepository;
+    private NewsListAdapter newsListAdapter;
+    private ProgressBar progressBar;
 
     public FavoriteNewsFragment() {
         // Required empty public constructor
@@ -63,15 +65,9 @@ public class FavoriteNewsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        JSONParserUtil jsonParserUtil = new JSONParserUtil(requireActivity().getApplication());
-        try {
-            newsList =
-                    jsonParserUtil.parseJSONFileWithJSONObjectArray(NEWS_API_TEST_JSON_FILE).
-                            getArticles().subList(0, 10);
-            newsArray = newsList.toArray(new News[0]);
-        } catch (IOException | JSONException e) {
-            e.printStackTrace();
-        }
+        iNewsRepository =
+                new NewsRepository(requireActivity().getApplication(), this);
+        newsList = new ArrayList<>();
     }
 
     @Override
@@ -96,6 +92,7 @@ public class FavoriteNewsFragment extends Fragment {
             public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
                 if (menuItem.getItemId() == R.id.delete) {
                     Log.d(TAG, "Delete menu item pressed");
+                    iNewsRepository.deleteFavoriteNews();
                 }
                 return false;
             }
@@ -103,12 +100,18 @@ public class FavoriteNewsFragment extends Fragment {
             // associated with a menu icon is called twice
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
+        progressBar = view.findViewById(R.id.progress_bar);
+
         listViewFavNews = view.findViewById(R.id.listview_fav_news);
 
         // Use one of these four methods to populate the ListView:
         // 1) useDefaultLisAdapter(); 2) useCustomArrayAdapter();
         // 3) useCustomBaseAdapter(); 4) useCustomListAdapter();
         useCustomListAdapter();
+
+        progressBar.setVisibility(View.VISIBLE);
+
+        iNewsRepository.getFavoriteNews();
 
         listViewFavNews.setOnItemClickListener((parent, view1, position, id) ->
                 Snackbar.make(requireActivity().findViewById(android.R.id.content),
@@ -131,7 +134,7 @@ public class FavoriteNewsFragment extends Fragment {
      */
     private void useCustomArrayAdapter() {
         NewsArrayAdapter newsListArrayAdapter =
-                new NewsArrayAdapter(requireContext(), R.layout.fav_news_list_item, newsArray);
+                new NewsArrayAdapter(requireContext(), R.layout.favorite_news_list_item, newsArray);
         listViewFavNews.setAdapter(newsListArrayAdapter);
     }
 
@@ -140,11 +143,13 @@ public class FavoriteNewsFragment extends Fragment {
      * R.id.listview_fav_news (listViewFavNews) with an ArrayList of News.
      */
     private void useCustomListAdapter() {
-        NewsListAdapter newsListAdapter =
-                new NewsListAdapter(requireContext(), R.layout.fav_news_list_item, newsList,
-                        new NewsListAdapter.OnDeleteButtonClickListener() {
+        newsListAdapter =
+                new NewsListAdapter(requireContext(), R.layout.favorite_news_list_item, newsList,
+                        new NewsListAdapter.OnFavoriteButtonClickListener() {
                             @Override
-                            public void onDeleteButtonClick(News news) {
+                            public void onFavoriteButtonClick(News news) {
+                                news.setFavorite(false);
+                                iNewsRepository.updateNews(news);
                                 Snackbar.make(listViewFavNews,
                                         news.getTitle(), Snackbar.LENGTH_SHORT).show();
                             }
@@ -159,5 +164,33 @@ public class FavoriteNewsFragment extends Fragment {
     private void useCustomBaseAdapter() {
         NewsBaseAdapter newsListBaseAdapter = new NewsBaseAdapter(newsList);
         listViewFavNews.setAdapter(newsListBaseAdapter);
+    }
+
+    @Override
+    public void onSuccess(List<News> newsList, long lastUpdate) {
+        if (newsList != null) {
+            this.newsList.clear();
+            this.newsList.addAll(newsList);
+            requireActivity().runOnUiThread(() -> {
+                newsListAdapter.notifyDataSetChanged();
+                progressBar.setVisibility(View.GONE);
+            });
+        }
+    }
+
+    @Override
+    public void onFailure(String errorMessage) {
+        progressBar.setVisibility(View.GONE);
+        Snackbar.make(requireActivity().findViewById(android.R.id.content),
+                errorMessage, Snackbar.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onNewsFavoriteStatusChanged(News news) {
+        newsList.remove(news);
+        requireActivity().runOnUiThread(() -> newsListAdapter.notifyDataSetChanged());
+        Snackbar.make(requireActivity().findViewById(android.R.id.content),
+                getString(R.string.news_removed_from_favorite_list_message),
+                Snackbar.LENGTH_LONG).show();
     }
 }

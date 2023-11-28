@@ -1,6 +1,8 @@
 package it.unimib.worldnews.ui.main;
 
-import static it.unimib.worldnews.util.Constants.NEWS_API_TEST_JSON_FILE;
+import static it.unimib.worldnews.util.Constants.LAST_UPDATE;
+import static it.unimib.worldnews.util.Constants.SHARED_PREFERENCES_COUNTRY_OF_INTEREST;
+import static it.unimib.worldnews.util.Constants.SHARED_PREFERENCES_FILE_NAME;
 
 import android.os.Bundle;
 
@@ -11,31 +13,41 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import com.google.android.material.snackbar.Snackbar;
 
-import org.json.JSONException;
-
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import it.unimib.worldnews.R;
 import it.unimib.worldnews.adapter.NewsRecyclerViewAdapter;
 import it.unimib.worldnews.model.News;
-import it.unimib.worldnews.util.JSONParserUtil;
+import it.unimib.worldnews.repository.INewsRepository;
+import it.unimib.worldnews.repository.NewsMockRepository;
+import it.unimib.worldnews.repository.NewsRepository;
+import it.unimib.worldnews.util.ResponseCallback;
+import it.unimib.worldnews.util.SharedPreferencesUtil;
 
 /**
  * Fragment that shows the news associated with a Country.
  */
-public class CountryNewsFragment extends Fragment {
+public class CountryNewsFragment extends Fragment implements ResponseCallback {
 
     private static final String TAG = CountryNewsFragment.class.getSimpleName();
+
+    private List<News> newsList;
+    private INewsRepository iNewsRepository;
+    private NewsRecyclerViewAdapter newsRecyclerViewAdapter;
+    private SharedPreferencesUtil sharedPreferencesUtil;
+    private ProgressBar progressBar;
 
     public CountryNewsFragment() {
         // Required empty public constructor
@@ -54,6 +66,22 @@ public class CountryNewsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Log.d(TAG, "debug mode: " + requireActivity().getResources().getBoolean(R.bool.debug_mode));
+
+        if (requireActivity().getResources().getBoolean(R.bool.debug_mode)) {
+            // Use NewsMockRepository to read the news from
+            // newsapi-test.json file contained in assets folder
+            iNewsRepository =
+                    new NewsMockRepository(requireActivity().getApplication(), this,
+                            INewsRepository.JsonParserType.GSON);
+        } else {
+            iNewsRepository =
+                    new NewsRepository(requireActivity().getApplication(), this);
+        }
+
+        sharedPreferencesUtil = new SharedPreferencesUtil(requireActivity().getApplication());
+        newsList = new ArrayList<>();
     }
 
     @Override
@@ -78,17 +106,15 @@ public class CountryNewsFragment extends Fragment {
             }
         });
 
+        progressBar = view.findViewById(R.id.progress_bar);
+
         RecyclerView recyclerViewCountryNews = view.findViewById(R.id.recyclerview_country_news);
         RecyclerView.LayoutManager layoutManager =
                 new LinearLayoutManager(requireContext(),
                         LinearLayoutManager.VERTICAL, false);
 
-        // Use one of these three methods to get the list of News
-        // 1) getNewsListWithJsonReader(), 2) getNewsListJSONObjectArray(),
-        // 3) getNewsListWithWithGSon()
-        List<News> newsList = getNewsListWithWithGSon();
-
-        NewsRecyclerViewAdapter newsRecyclerViewAdapter = new NewsRecyclerViewAdapter(newsList,
+        newsRecyclerViewAdapter = new NewsRecyclerViewAdapter(newsList,
+                requireActivity().getApplication(),
                 new NewsRecyclerViewAdapter.OnItemClickListener() {
                     @Override
                     public void onNewsItemClick(News news) {
@@ -96,54 +122,63 @@ public class CountryNewsFragment extends Fragment {
                     }
 
                     @Override
-                    public void onDeleteButtonPressed(int position) {
-                        Snackbar.make(view, getString(R.string.list_size_message) + newsList.size(),
-                                Snackbar.LENGTH_SHORT).show();
+                    public void onFavoriteButtonPressed(int position) {
+                        newsList.get(position).setFavorite(!newsList.get(position).isFavorite());
+                        iNewsRepository.updateNews(newsList.get(position));
                     }
                 });
         recyclerViewCountryNews.setLayoutManager(layoutManager);
         recyclerViewCountryNews.setAdapter(newsRecyclerViewAdapter);
+
+        String lastUpdate = "0";
+
+        if (sharedPreferencesUtil.readStringData(
+                SHARED_PREFERENCES_FILE_NAME, LAST_UPDATE) != null) {
+            lastUpdate = sharedPreferencesUtil.readStringData(
+                    SHARED_PREFERENCES_FILE_NAME, LAST_UPDATE);
+        }
+
+        progressBar.setVisibility(View.VISIBLE);
+        iNewsRepository.fetchNews(sharedPreferencesUtil.readStringData(
+                        SHARED_PREFERENCES_FILE_NAME, SHARED_PREFERENCES_COUNTRY_OF_INTEREST), 0,
+                Long.parseLong(lastUpdate));
     }
 
-    /**
-     * Returns the list of News using JsonReader class.
-     * @return The list of News.
-     */
-    private List<News> getNewsListWithJsonReader() {
-        JSONParserUtil jsonParserUtil = new JSONParserUtil(requireActivity().getApplication());
-        try {
-            return jsonParserUtil.parseJSONFileWithJsonReader(NEWS_API_TEST_JSON_FILE).getArticles();
-        } catch (IOException e) {
-            e.printStackTrace();
+    @Override
+    public void onSuccess(List<News> newsList, long lastUpdate) {
+        if (newsList != null) {
+            this.newsList.clear();
+            this.newsList.addAll(newsList);
+            sharedPreferencesUtil.writeStringData(SHARED_PREFERENCES_FILE_NAME, LAST_UPDATE,
+                    String.valueOf(lastUpdate));
         }
-        return null;
+
+        requireActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                newsRecyclerViewAdapter.notifyDataSetChanged();
+                progressBar.setVisibility(View.GONE);
+            }
+        });
     }
 
-    /**
-     * Returns the list of News using JSONObject and JSONArray classes.
-     * @return The list of News.
-     */
-    private List<News> getNewsListJSONObjectArray() {
-        JSONParserUtil jsonParserUtil = new JSONParserUtil(requireActivity().getApplication());
-        try {
-            return jsonParserUtil.parseJSONFileWithJSONObjectArray(NEWS_API_TEST_JSON_FILE).getArticles();
-        } catch (IOException | JSONException e) {
-            e.printStackTrace();
-        }
-        return null;
+    @Override
+    public void onFailure(String errorMessage) {
+        progressBar.setVisibility(View.GONE);
+        Snackbar.make(requireActivity().findViewById(android.R.id.content),
+                errorMessage, Snackbar.LENGTH_LONG).show();
     }
 
-    /**
-     * Returns the list of News using Gson.
-     * @return The list of News.
-     */
-    private List<News> getNewsListWithWithGSon() {
-        JSONParserUtil jsonParserUtil = new JSONParserUtil(requireActivity().getApplication());
-        try {
-            return jsonParserUtil.parseJSONFileWithGSon(NEWS_API_TEST_JSON_FILE).getArticles();
-        } catch (IOException e) {
-            e.printStackTrace();
+    @Override
+    public void onNewsFavoriteStatusChanged(News news) {
+        if (news.isFavorite()) {
+            Snackbar.make(requireActivity().findViewById(android.R.id.content),
+                    getString(R.string.news_added_to_favorite_list_message),
+                    Snackbar.LENGTH_LONG).show();
+        } else {
+            Snackbar.make(requireActivity().findViewById(android.R.id.content),
+                    getString(R.string.news_removed_from_favorite_list_message),
+                    Snackbar.LENGTH_LONG).show();
         }
-        return null;
     }
 }
