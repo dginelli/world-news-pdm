@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+
 plugins {
     id("com.android.application")
 }
@@ -14,6 +16,9 @@ android {
         versionName = "0.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        resValue("string", "news_api_key", gradleLocalProperties(rootDir).getProperty("news_api_key"))
+        resValue("bool", "debug_mode", gradleLocalProperties(rootDir).getProperty("debug_mode"))
     }
 
     buildTypes {
@@ -45,6 +50,10 @@ dependencies {
     implementation("androidx.navigation:navigation-ui:$nav_version")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("commons-io:commons-io:2.15.0")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("androidx.room:room-runtime:2.6.0")
+    annotationProcessor("androidx.room:room-compiler:2.6.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
