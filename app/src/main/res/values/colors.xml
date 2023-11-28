@@ -10,6 +10,7 @@
     <color name="google_login_button">#eceff1</color>
     <color name="google_login_text">#616161</color>
     <color name="grey_separator">#585F65</color>
+    <color name="red_500">#F44336</color>
 
     <color name="indigo_100">#e8eaf6</color>
     <color name="dark_grey">#212121</color>
