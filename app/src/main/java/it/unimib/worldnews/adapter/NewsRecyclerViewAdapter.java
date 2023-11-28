@@ -1,18 +1,22 @@
 package it.unimib.worldnews.adapter;
 
+import android.app.Application;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
 import it.unimib.worldnews.R;
 import it.unimib.worldnews.model.News;
+import it.unimib.worldnews.util.DateTimeUtil;
 
 /**
  * Custom adapter that extends RecyclerView.Adapter to show an ArrayList of News
@@ -27,14 +31,17 @@ public class NewsRecyclerViewAdapter extends
      */
     public interface OnItemClickListener {
         void onNewsItemClick(News news);
-        void onDeleteButtonPressed(int position);
+        void onFavoriteButtonPressed(int position);
     }
 
     private final List<News> newsList;
+    private final Application application;
     private final OnItemClickListener onItemClickListener;
 
-    public NewsRecyclerViewAdapter(List<News> newsList, OnItemClickListener onItemClickListener) {
+    public NewsRecyclerViewAdapter(List<News> newsList, Application application,
+                                   OnItemClickListener onItemClickListener) {
         this.newsList = newsList;
+        this.application = application;
         this.onItemClickListener = onItemClickListener;
     }
 
@@ -42,7 +49,7 @@ public class NewsRecyclerViewAdapter extends
     @Override
     public NewViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).
-                inflate(R.layout.fav_news_list_item, parent, false);
+                inflate(R.layout.news_list_item, parent, false);
 
         return new NewViewHolder(view);
     }
@@ -66,32 +73,53 @@ public class NewsRecyclerViewAdapter extends
     public class NewViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
 
         private final TextView textViewTitle;
-        private final TextView textViewAuthor;
+        private final TextView textViewDate;
+        private final ImageView imageViewFavoriteNews;
 
         public NewViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewTitle = itemView.findViewById(R.id.textview_title);
-            textViewAuthor = itemView.findViewById(R.id.textview_author);
-            Button buttonDelete = itemView.findViewById(R.id.button_delete);
+            textViewDate = itemView.findViewById(R.id.textview_date);
+            imageViewFavoriteNews = itemView.findViewById(R.id.imageview_favorite_news);
             itemView.setOnClickListener(this);
-            buttonDelete.setOnClickListener(this);
+            imageViewFavoriteNews.setOnClickListener(this);
         }
 
         public void bind(News news) {
             textViewTitle.setText(news.getTitle());
-            textViewAuthor.setText(news.getAuthor());
+            textViewDate.setText(DateTimeUtil.getDate(news.getDate()));
+            setImageViewFavoriteNews(newsList.get(getAdapterPosition()).isFavorite());
         }
 
         @Override
         public void onClick(View v) {
-            if (v.getId() == R.id.button_delete) {
-                newsList.remove(getAdapterPosition());
-                // Call this method to refresh the UI after the deletion of an item
-                // and update the content of RecyclerView
-                notifyItemRemoved(getAdapterPosition());
-                onItemClickListener.onDeleteButtonPressed(getAdapterPosition());
+            if (v.getId() == R.id.imageview_favorite_news) {
+                setImageViewFavoriteNews(!newsList.get(getAdapterPosition()).isFavorite());
+                onItemClickListener.onFavoriteButtonPressed(getAdapterPosition());
             } else {
                 onItemClickListener.onNewsItemClick(newsList.get(getAdapterPosition()));
+            }
+        }
+
+        private void setImageViewFavoriteNews(boolean isFavorite) {
+            if (isFavorite) {
+                imageViewFavoriteNews.setImageDrawable(
+                        AppCompatResources.getDrawable(application,
+                                R.drawable.ic_baseline_favorite_24));
+                imageViewFavoriteNews.setColorFilter(
+                        ContextCompat.getColor(
+                                imageViewFavoriteNews.getContext(),
+                                R.color.red_500)
+                );
+            } else {
+                imageViewFavoriteNews.setImageDrawable(
+                        AppCompatResources.getDrawable(application,
+                                R.drawable.ic_baseline_favorite_border_24));
+                imageViewFavoriteNews.setColorFilter(
+                        ContextCompat.getColor(
+                                imageViewFavoriteNews.getContext(),
+                                R.color.black)
+                );
             }
         }
     }
