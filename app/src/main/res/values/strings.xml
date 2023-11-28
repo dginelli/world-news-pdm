@@ -51,4 +51,13 @@
     <string name="personal_area">Personal area</string>
 
     <string name="nav_drawer_subtitle">Stay tuned for news from the world</string>
+
+    <string name="error_retrieving_news">Error in retrieving the news</string>
+    <string name="unexpected_error">Unexpected error</string>
+
+    <string name="fav_content_description">Add the news to the favorite list</string>
+    <string name="fav_delete_content_description">Remove the news from the favorite list</string>
+
+    <string name="news_added_to_favorite_list_message">News added to the favorite list</string>
+    <string name="news_removed_from_favorite_list_message">News removed from the favorite list</string>
 </resources>
