@@ -1,9 +1,9 @@
 package it.unimib.worldnews.util;
 
 import android.app.Application;
-import android.content.Context;
 import android.util.JsonReader;
 import android.util.JsonToken;
+import android.util.Log;
 
 import com.google.gson.Gson;
 
@@ -25,13 +25,20 @@ import it.unimib.worldnews.model.NewsApiResponse;
 import it.unimib.worldnews.model.NewsSource;
 
 /**
- * Util class to show different ways to parse a JSON file.
+ * Utility class to show different ways to parse a JSON file.
  */
 public class JSONParserUtil {
 
     private static final String TAG = JSONParserUtil.class.getSimpleName();
 
-    private final Context context;
+    public enum JsonParserType {
+        JSON_READER,
+        JSON_OBJECT_ARRAY,
+        GSON,
+        JSON_ERROR
+    };
+
+    private final Application application;
 
     private final String statusParameter = "status";
     private final String totalResultsParameter = "totalResults";
@@ -47,18 +54,18 @@ public class JSONParserUtil {
     private final String nameParameter = "name";
 
     public JSONParserUtil(Application application) {
-        this.context = application.getApplicationContext();
+        this.application = application;
     }
 
     /**
      * Returns a list of News from a JSON file parsed using JsonReader class.
-     * Doc can be read here: <a href="https://developer.android.com/reference/android/util/JsonReader">...</a>
+     * Doc can be read here: https://developer.android.com/reference/android/util/JsonReader
      * @param fileName The JSON file to be parsed.
      * @return The NewsApiResponse object associated with the JSON file content.
      * @throws IOException
      */
     public NewsApiResponse parseJSONFileWithJsonReader(String fileName) throws IOException {
-        InputStream inputStream = context.getAssets().open(fileName);
+        InputStream inputStream = application.getAssets().open(fileName);
         JsonReader jsonReader = new JsonReader(new InputStreamReader(inputStream));
         NewsApiResponse newsApiResponse = new NewsApiResponse();
         List<News> newsList = null;
@@ -131,15 +138,15 @@ public class JSONParserUtil {
         }
         jsonReader.endObject(); // End of JSON object
 
-        newsApiResponse.setArticles(newsList);
+        newsApiResponse.setNewsList(newsList);
 
         return newsApiResponse;
     }
 
     /**
      * Returns a list of News from a JSON file parsed using JSONObject and JSONReader classes.
-     * Doc of JSONObject: <a href="https://developer.android.com/reference/org/json/JSONObject">...</a>
-     * Doc of JSONArray: <a href="https://developer.android.com/reference/org/json/JSONArray">...</a>
+     * Doc of JSONObject: https://developer.android.com/reference/org/json/JSONObject
+     * Doc of JSONArray: https://developer.android.com/reference/org/json/JSONArray
      * @param fileName The JSON file to be parsed.
      * @return The NewsApiResponse object associated with the JSON file content.
      * @throws IOException
@@ -148,7 +155,7 @@ public class JSONParserUtil {
     public NewsApiResponse parseJSONFileWithJSONObjectArray(String fileName)
             throws IOException, JSONException {
 
-        InputStream inputStream = context.getAssets().open(fileName);
+        InputStream inputStream = application.getAssets().open(fileName);
         String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
 
         JSONObject rootJSONObject = new JSONObject(content);
@@ -180,7 +187,7 @@ public class JSONParserUtil {
                 newsList.add(news);
             }
         }
-        newsApiResponse.setArticles(newsList);
+        newsApiResponse.setNewsList(newsList);
 
         return newsApiResponse;
     }
@@ -193,7 +200,7 @@ public class JSONParserUtil {
      * @throws IOException
      */
     public NewsApiResponse parseJSONFileWithGSon(String fileName) throws IOException {
-        InputStream inputStream = context.getAssets().open(fileName);
+        InputStream inputStream = application.getAssets().open(fileName);
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
         return new Gson().fromJson(bufferedReader, NewsApiResponse.class);
