@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -30,24 +31,28 @@ import java.util.List;
 import it.unimib.worldnews.R;
 import it.unimib.worldnews.adapter.NewsRecyclerViewAdapter;
 import it.unimib.worldnews.model.News;
+import it.unimib.worldnews.model.Result;
 import it.unimib.worldnews.repository.INewsRepository;
+import it.unimib.worldnews.repository.INewsRepositoryWithLiveData;
 import it.unimib.worldnews.repository.NewsMockRepository;
 import it.unimib.worldnews.repository.NewsRepository;
+import it.unimib.worldnews.util.ErrorMessagesUtil;
 import it.unimib.worldnews.util.ResponseCallback;
+import it.unimib.worldnews.util.ServiceLocator;
 import it.unimib.worldnews.util.SharedPreferencesUtil;
 
 /**
  * Fragment that shows the news associated with a Country.
  */
-public class CountryNewsFragment extends Fragment implements ResponseCallback {
+public class CountryNewsFragment extends Fragment {
 
     private static final String TAG = CountryNewsFragment.class.getSimpleName();
 
     private List<News> newsList;
-    private INewsRepository iNewsRepository;
     private NewsRecyclerViewAdapter newsRecyclerViewAdapter;
     private SharedPreferencesUtil sharedPreferencesUtil;
     private ProgressBar progressBar;
+    private NewsViewModel newsViewModel;
 
     public CountryNewsFragment() {
         // Required empty public constructor
@@ -69,18 +74,20 @@ public class CountryNewsFragment extends Fragment implements ResponseCallback {
 
         Log.d(TAG, "debug mode: " + requireActivity().getResources().getBoolean(R.bool.debug_mode));
 
-        if (requireActivity().getResources().getBoolean(R.bool.debug_mode)) {
-            // Use NewsMockRepository to read the news from
-            // newsapi-test.json file contained in assets folder
-            iNewsRepository =
-                    new NewsMockRepository(requireActivity().getApplication(), this,
-                            INewsRepository.JsonParserType.GSON);
-        } else {
-            iNewsRepository =
-                    new NewsRepository(requireActivity().getApplication(), this);
-        }
-
         sharedPreferencesUtil = new SharedPreferencesUtil(requireActivity().getApplication());
+
+        INewsRepositoryWithLiveData newsRepositoryWithLiveData =
+            ServiceLocator.getInstance().getNewsRepository(
+                requireActivity().getApplication(),
+                requireActivity().getApplication().getResources().getBoolean(R.bool.debug_mode)
+            );
+
+        // This is the way to create a ViewModel with custom parameters
+        // (see NewsViewModelFactory class for the implementation details)
+        newsViewModel = new ViewModelProvider(
+                requireActivity(),
+                new NewsViewModelFactory(newsRepositoryWithLiveData)).get(NewsViewModel.class);
+
         newsList = new ArrayList<>();
     }
 
@@ -124,14 +131,16 @@ public class CountryNewsFragment extends Fragment implements ResponseCallback {
                     @Override
                     public void onFavoriteButtonPressed(int position) {
                         newsList.get(position).setFavorite(!newsList.get(position).isFavorite());
-                        iNewsRepository.updateNews(newsList.get(position));
+                        newsViewModel.updateNews(newsList.get(position));
                     }
                 });
         recyclerViewCountryNews.setLayoutManager(layoutManager);
         recyclerViewCountryNews.setAdapter(newsRecyclerViewAdapter);
 
-        String lastUpdate = "0";
+        String country = sharedPreferencesUtil.readStringData(
+                SHARED_PREFERENCES_FILE_NAME, SHARED_PREFERENCES_COUNTRY_OF_INTEREST);
 
+        String lastUpdate = "0";
         if (sharedPreferencesUtil.readStringData(
                 SHARED_PREFERENCES_FILE_NAME, LAST_UPDATE) != null) {
             lastUpdate = sharedPreferencesUtil.readStringData(
@@ -139,46 +148,30 @@ public class CountryNewsFragment extends Fragment implements ResponseCallback {
         }
 
         progressBar.setVisibility(View.VISIBLE);
-        iNewsRepository.fetchNews(sharedPreferencesUtil.readStringData(
-                        SHARED_PREFERENCES_FILE_NAME, SHARED_PREFERENCES_COUNTRY_OF_INTEREST), 0,
-                Long.parseLong(lastUpdate));
-    }
 
-    @Override
-    public void onSuccess(List<News> newsList, long lastUpdate) {
-        if (newsList != null) {
-            this.newsList.clear();
-            this.newsList.addAll(newsList);
-            sharedPreferencesUtil.writeStringData(SHARED_PREFERENCES_FILE_NAME, LAST_UPDATE,
-                    String.valueOf(lastUpdate));
-        }
-
-        requireActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                newsRecyclerViewAdapter.notifyDataSetChanged();
-                progressBar.setVisibility(View.GONE);
-            }
-        });
-    }
-
-    @Override
-    public void onFailure(String errorMessage) {
-        progressBar.setVisibility(View.GONE);
-        Snackbar.make(requireActivity().findViewById(android.R.id.content),
-                errorMessage, Snackbar.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void onNewsFavoriteStatusChanged(News news) {
-        if (news.isFavorite()) {
-            Snackbar.make(requireActivity().findViewById(android.R.id.content),
-                    getString(R.string.news_added_to_favorite_list_message),
-                    Snackbar.LENGTH_LONG).show();
-        } else {
-            Snackbar.make(requireActivity().findViewById(android.R.id.content),
-                    getString(R.string.news_removed_from_favorite_list_message),
-                    Snackbar.LENGTH_LONG).show();
-        }
+        // Observe the LiveData associated with the MutableLiveData containing all the news
+        // returned by the method getNews(String, long) of NewsViewModel class.
+        // Pay attention to which LifecycleOwner you give as value to
+        // the method observe(LifecycleOwner, Observer).
+        // In this case, getViewLifecycleOwner() refers to
+        // androidx.fragment.app.FragmentViewLifecycleOwner and not to the Fragment itself.
+        // You can read more details here: https://stackoverflow.com/a/58663143/4255576
+        newsViewModel.getNews(country, Long.parseLong(lastUpdate)).observe(getViewLifecycleOwner(),
+            result -> {
+                if (result.isSuccess()) {
+                    int initialSize = this.newsList.size();
+                    this.newsList.clear();
+                    this.newsList.addAll(((Result.Success) result).getData().getNewsList());
+                    newsRecyclerViewAdapter.notifyItemRangeInserted(initialSize, this.newsList.size());
+                    progressBar.setVisibility(View.GONE);
+                } else {
+                    ErrorMessagesUtil errorMessagesUtil =
+                            new ErrorMessagesUtil(requireActivity().getApplication());
+                    Snackbar.make(view, errorMessagesUtil.
+                                    getErrorMessage(((Result.Error) result).getMessage()),
+                            Snackbar.LENGTH_SHORT).show();
+                    progressBar.setVisibility(View.GONE);
+                }
+            });
     }
 }
