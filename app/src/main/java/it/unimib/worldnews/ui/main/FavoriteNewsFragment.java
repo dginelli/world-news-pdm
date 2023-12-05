@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -29,23 +30,23 @@ import it.unimib.worldnews.adapter.NewsArrayAdapter;
 import it.unimib.worldnews.adapter.NewsBaseAdapter;
 import it.unimib.worldnews.adapter.NewsListAdapter;
 import it.unimib.worldnews.model.News;
+import it.unimib.worldnews.model.Result;
 import it.unimib.worldnews.repository.INewsRepository;
 import it.unimib.worldnews.repository.NewsRepository;
+import it.unimib.worldnews.util.ErrorMessagesUtil;
 import it.unimib.worldnews.util.ResponseCallback;
 
 /**
  * Fragment that shows the favorite news of the user.
  */
-public class FavoriteNewsFragment extends Fragment implements ResponseCallback {
+public class FavoriteNewsFragment extends Fragment {
 
     private static final String TAG = FavoriteNewsFragment.class.getSimpleName();
 
-    private ListView listViewFavNews;
-    private News[] newsArray;
     private List<News> newsList;
-    private INewsRepository iNewsRepository;
     private NewsListAdapter newsListAdapter;
     private ProgressBar progressBar;
+    private NewsViewModel newsViewModel;
 
     public FavoriteNewsFragment() {
         // Required empty public constructor
@@ -64,10 +65,8 @@ public class FavoriteNewsFragment extends Fragment implements ResponseCallback {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        iNewsRepository =
-                new NewsRepository(requireActivity().getApplication(), this);
         newsList = new ArrayList<>();
+        newsViewModel = new ViewModelProvider(requireActivity()).get(NewsViewModel.class);
     }
 
     @Override
@@ -91,8 +90,7 @@ public class FavoriteNewsFragment extends Fragment implements ResponseCallback {
             @Override
             public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
                 if (menuItem.getItemId() == R.id.delete) {
-                    Log.d(TAG, "Delete menu item pressed");
-                    iNewsRepository.deleteFavoriteNews();
+                    newsViewModel.deleteAllFavoriteNews();
                 }
                 return false;
             }
@@ -102,95 +100,44 @@ public class FavoriteNewsFragment extends Fragment implements ResponseCallback {
 
         progressBar = view.findViewById(R.id.progress_bar);
 
-        listViewFavNews = view.findViewById(R.id.listview_fav_news);
+        ListView listViewFavNews = view.findViewById(R.id.listview_fav_news);
 
-        // Use one of these four methods to populate the ListView:
-        // 1) useDefaultLisAdapter(); 2) useCustomArrayAdapter();
-        // 3) useCustomBaseAdapter(); 4) useCustomListAdapter();
-        useCustomListAdapter();
+        newsListAdapter =
+            new NewsListAdapter(requireContext(), R.layout.favorite_news_list_item, newsList,
+                    news -> {
+                        news.setFavorite(false);
+                        newsViewModel.removeFromFavorite(news);
+                    });
+        listViewFavNews.setAdapter(newsListAdapter);
 
         progressBar.setVisibility(View.VISIBLE);
 
-        iNewsRepository.getFavoriteNews();
+        // Observe the LiveData associated with the MutableLiveData containing the favorite news
+        // returned by the method getFavoriteNewsLiveData() of NewsViewModel class.
+        // Pay attention to which LifecycleOwner you give as value to
+        // the method observe(LifecycleOwner, Observer).
+        // In this case, getViewLifecycleOwner() refers to
+        // androidx.fragment.app.FragmentViewLifecycleOwner and not to the Fragment itself.
+        // You can read more details here: https://stackoverflow.com/a/58663143/4255576
+        newsViewModel.getFavoriteNewsLiveData().observe(getViewLifecycleOwner(), result -> {
+            if (result != null) {
+                if (result.isSuccess()) {
+                    newsList.clear();
+                    newsList.addAll(((Result.Success)result).getData().getNewsList());
+                    newsListAdapter.notifyDataSetChanged();
+                } else {
+                    ErrorMessagesUtil errorMessagesUtil =
+                            new ErrorMessagesUtil(requireActivity().getApplication());
+                    Snackbar.make(view, errorMessagesUtil.
+                                    getErrorMessage(((Result.Error)result).getMessage()),
+                            Snackbar.LENGTH_SHORT).show();
+                }
+                progressBar.setVisibility(View.GONE);
+            }
+        });
 
         listViewFavNews.setOnItemClickListener((parent, view1, position, id) ->
                 Snackbar.make(requireActivity().findViewById(android.R.id.content),
                         newsList.get(position).getTitle(), Snackbar.LENGTH_SHORT).show());
-    }
-
-    /**
-     * Creates an ArrayAdapter to be used to populate the ListView
-     * R.id.listview_fav_news (listViewFavNews) with an array of News.
-     */
-    private void useDefaultLisAdapter() {
-        ArrayAdapter<News> adapter = new ArrayAdapter<News>(requireContext(),
-                android.R.layout.simple_list_item_1, newsArray);
-        listViewFavNews.setAdapter(adapter);
-    }
-
-    /**
-     * Creates a custom ArrayAdapter to be used to populate the ListView
-     * R.id.listview_fav_news (listViewFavNews) with an array of News.
-     */
-    private void useCustomArrayAdapter() {
-        NewsArrayAdapter newsListArrayAdapter =
-                new NewsArrayAdapter(requireContext(), R.layout.favorite_news_list_item, newsArray);
-        listViewFavNews.setAdapter(newsListArrayAdapter);
-    }
-
-    /**
-     * Creates a custom ArrayAdapter to be used to populate the ListView
-     * R.id.listview_fav_news (listViewFavNews) with an ArrayList of News.
-     */
-    private void useCustomListAdapter() {
-        newsListAdapter =
-                new NewsListAdapter(requireContext(), R.layout.favorite_news_list_item, newsList,
-                        new NewsListAdapter.OnFavoriteButtonClickListener() {
-                            @Override
-                            public void onFavoriteButtonClick(News news) {
-                                news.setFavorite(false);
-                                iNewsRepository.updateNews(news);
-                                Snackbar.make(listViewFavNews,
-                                        news.getTitle(), Snackbar.LENGTH_SHORT).show();
-                            }
-                        });
-        listViewFavNews.setAdapter(newsListAdapter);
-    }
-
-    /**
-     * Creates a custom BaseAdapter to be used to populate the ListView
-     * R.id.listview_fav_news (listViewFavNews).
-     */
-    private void useCustomBaseAdapter() {
-        NewsBaseAdapter newsListBaseAdapter = new NewsBaseAdapter(newsList);
-        listViewFavNews.setAdapter(newsListBaseAdapter);
-    }
-
-    @Override
-    public void onSuccess(List<News> newsList, long lastUpdate) {
-        if (newsList != null) {
-            this.newsList.clear();
-            this.newsList.addAll(newsList);
-            requireActivity().runOnUiThread(() -> {
-                newsListAdapter.notifyDataSetChanged();
-                progressBar.setVisibility(View.GONE);
-            });
-        }
-    }
-
-    @Override
-    public void onFailure(String errorMessage) {
-        progressBar.setVisibility(View.GONE);
-        Snackbar.make(requireActivity().findViewById(android.R.id.content),
-                errorMessage, Snackbar.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void onNewsFavoriteStatusChanged(News news) {
-        newsList.remove(news);
-        requireActivity().runOnUiThread(() -> newsListAdapter.notifyDataSetChanged());
-        Snackbar.make(requireActivity().findViewById(android.R.id.content),
-                getString(R.string.news_removed_from_favorite_list_message),
-                Snackbar.LENGTH_LONG).show();
     }
 }
