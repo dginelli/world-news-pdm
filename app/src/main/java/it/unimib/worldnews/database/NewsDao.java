@@ -14,7 +14,7 @@ import it.unimib.worldnews.model.News;
 /**
  * Data Access Object (DAO) that provides methods that can be used to query,
  * update, insert, and delete data in the database.
- * <a href="https://developer.android.com/training/data-storage/room/accessing-data">...</a>
+ * https://developer.android.com/training/data-storage/room/accessing-data
  */
 @Dao
 public interface NewsDao {
@@ -46,8 +46,8 @@ public interface NewsDao {
     void deleteAllWithoutQuery(News... news);
 
     @Update
-    void updateSingleFavoriteNews(News news);
+    int updateSingleFavoriteNews(News news);
 
     @Update
-    void updateListFavoriteNews(List<News> news);
+    int updateListFavoriteNews(List<News> news);
 }
