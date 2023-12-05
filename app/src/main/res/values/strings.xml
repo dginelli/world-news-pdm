@@ -53,6 +53,7 @@
     <string name="nav_drawer_subtitle">Stay tuned for news from the world</string>
 
     <string name="error_retrieving_news">Error in retrieving the news</string>
+    <string name="api_key_error">API Key not valid or maximum number of requests reached</string>
     <string name="unexpected_error">Unexpected error</string>
 
     <string name="fav_content_description">Add the news to the favorite list</string>
