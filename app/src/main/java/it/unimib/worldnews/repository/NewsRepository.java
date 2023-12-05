@@ -16,7 +16,6 @@ import it.unimib.worldnews.database.NewsRoomDatabase;
 import it.unimib.worldnews.model.News;
 import it.unimib.worldnews.model.NewsApiResponse;
 import it.unimib.worldnews.service.NewsApiService;
-import it.unimib.worldnews.util.ResponseCallback;
 import it.unimib.worldnews.util.ServiceLocator;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -24,7 +23,7 @@ import retrofit2.Response;
 
 /**
  * Repository to get the news using the API
- * provided by NewsApi.org (<a href="https://newsapi.org">...</a>).
+ * provided by NewsApi.org (https://newsapi.org).
  */
 public class NewsRepository implements INewsRepository {
 
@@ -61,7 +60,7 @@ public class NewsRepository implements INewsRepository {
 
                     if (response.body() != null && response.isSuccessful() &&
                             !response.body().getStatus().equals("error")) {
-                        List<News> newsList = response.body().getArticles();
+                        List<News> newsList = response.body().getNewsList();
                         saveDataInDatabase(newsList);
                     } else {
                         responseCallback.onFailure(application.getString(R.string.error_retrieving_news));
@@ -79,6 +78,9 @@ public class NewsRepository implements INewsRepository {
         }
     }
 
+    /**
+     * Marks the favorite news as not favorite.
+     */
     @Override
     public void deleteFavoriteNews() {
         NewsRoomDatabase.databaseWriteExecutor.execute(() -> {
@@ -96,6 +98,7 @@ public class NewsRepository implements INewsRepository {
      * in the local database.
      * @param news The news to be updated.
      */
+    @Override
     public void updateNews(News news) {
         NewsRoomDatabase.databaseWriteExecutor.execute(() -> {
             newsDao.updateSingleFavoriteNews(news);
@@ -106,6 +109,7 @@ public class NewsRepository implements INewsRepository {
     /**
      * Gets the list of favorite news from the local database.
      */
+    @Override
     public void getFavoriteNews() {
         NewsRoomDatabase.databaseWriteExecutor.execute(() -> {
             responseCallback.onSuccess(newsDao.getFavoriteNews(), System.currentTimeMillis());
@@ -114,8 +118,8 @@ public class NewsRepository implements INewsRepository {
 
     /**
      * Saves the news in the local database.
-     * The method is executed in a Runnable because the database access
-     * cannot been executed in the main thread.
+     * The method is executed with an ExecutorService defined in NewsRoomDatabase class
+     * because the database access cannot been executed in the main thread.
      * @param newsList the list of news to be written in the local database.
      */
     private void saveDataInDatabase(List<News> newsList) {
@@ -154,8 +158,8 @@ public class NewsRepository implements INewsRepository {
 
     /**
      * Gets the news from the local database.
-     * The method is executed in a Runnable because the database access
-     * cannot been executed in the main thread.
+     * The method is executed with an ExecutorService defined in NewsRoomDatabase class
+     * because the database access cannot been executed in the main thread.
      */
     private void readDataFromDatabase(long lastUpdate) {
         NewsRoomDatabase.databaseWriteExecutor.execute(() -> {
