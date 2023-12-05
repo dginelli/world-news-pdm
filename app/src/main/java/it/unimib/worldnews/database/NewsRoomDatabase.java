@@ -16,7 +16,7 @@ import it.unimib.worldnews.model.News;
 
 /**
  * Main access point for the underlying connection to the local database.
- * <a href="https://developer.android.com/reference/kotlin/androidx/room/Database">...</a>
+ * https://developer.android.com/reference/kotlin/androidx/room/Database
  */
 @Database(entities = {News.class}, version = DATABASE_VERSION)
 public abstract class NewsRoomDatabase extends RoomDatabase {
