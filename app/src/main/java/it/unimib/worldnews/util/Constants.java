@@ -45,9 +45,13 @@ public class Constants {
 
     // Constants for refresh rate of news
     public static final String LAST_UPDATE = "last_update";
-    public static final int FRESH_TIMEOUT = 1000 * 60 * 60; // 1 hour in milliseconds
+    public static final int FRESH_TIMEOUT = 1000; // 1 hour in milliseconds
 
     // Constants for Room database
     public static final String NEWS_DATABASE_NAME = "news_db";
     public static final int DATABASE_VERSION = 1;
+
+    public static final String RETROFIT_ERROR = "retrofit_error";
+    public static final String API_KEY_ERROR = "api_key_error";
+    public static final String UNEXPECTED_ERROR = "unexpected_error";
 }
