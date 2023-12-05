@@ -6,20 +6,21 @@ import android.os.Parcelable;
 import java.util.List;
 
 /**
- * Class to represent the API response of NewsAPI.org (https://newsapi.org)
+ * Class to represent the API response of NewsAPI.org (<a href="https://newsapi.org">...</a>)
  * associated with the endpoint "Top headlines" - /v2/top-headlines.
  */
-public class NewsApiResponse implements Parcelable {
+public class NewsApiResponse extends NewsResponse {
     private String status;
     private int totalResults;
-    private List<News> articles;
 
-    public NewsApiResponse() {}
+    public NewsApiResponse() {
+        super();
+    }
 
     public NewsApiResponse(String status, int totalResults, List<News> articles) {
+        super(articles);
         this.status = status;
         this.totalResults = totalResults;
-        this.articles = articles;
     }
 
     public String getStatus() {
@@ -38,20 +39,11 @@ public class NewsApiResponse implements Parcelable {
         this.totalResults = totalResults;
     }
 
-    public List<News> getArticles() {
-        return articles;
-    }
-
-    public void setArticles(List<News> articles) {
-        this.articles = articles;
-    }
-
     @Override
     public String toString() {
         return "NewsApiResponse{" +
                 "status='" + status + '\'' +
                 ", totalResults=" + totalResults +
-                ", articles=" + articles +
                 '}';
     }
 
@@ -62,24 +54,24 @@ public class NewsApiResponse implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        super.writeToParcel(dest, flags);
         dest.writeString(this.status);
         dest.writeInt(this.totalResults);
-        dest.writeTypedList(this.articles);
     }
 
     public void readFromParcel(Parcel source) {
+        super.readFromParcel(source);
         this.status = source.readString();
         this.totalResults = source.readInt();
-        this.articles = source.createTypedArrayList(News.CREATOR);
     }
 
     protected NewsApiResponse(Parcel in) {
+        super(in);
         this.status = in.readString();
         this.totalResults = in.readInt();
-        this.articles = in.createTypedArrayList(News.CREATOR);
     }
 
-    public static final Parcelable.Creator<NewsApiResponse> CREATOR = new Parcelable.Creator<NewsApiResponse>() {
+    public static final Creator<NewsApiResponse> CREATOR = new Creator<NewsApiResponse>() {
         @Override
         public NewsApiResponse createFromParcel(Parcel source) {
             return new NewsApiResponse(source);
