@@ -41,7 +41,8 @@ public class Constants {
     public static final String TOP_HEADLINES_ENDPOINT = "top-headlines";
     public static final String TOP_HEADLINES_COUNTRY_PARAMETER = "country";
     public static final String TOP_HEADLINES_PAGE_SIZE_PARAMETER = "pageSize";
-    public static final int TOP_HEADLINES_PAGE_SIZE_VALUE = 100;
+    public static final String TOP_HEADLINES_PAGE_PARAMETER = "page";
+    public static final int TOP_HEADLINES_PAGE_SIZE_VALUE = 10;
 
     // Constants for refresh rate of news
     public static final String LAST_UPDATE = "last_update";
