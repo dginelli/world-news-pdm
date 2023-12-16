@@ -61,7 +61,7 @@ public class NewsSource implements Parcelable {
         this.name = in.readString();
     }
 
-    public static final Parcelable.Creator<NewsSource> CREATOR = new Parcelable.Creator<NewsSource>() {
+    public static final Creator<NewsSource> CREATOR = new Creator<NewsSource>() {
         @Override
         public NewsSource createFromParcel(Parcel source) {
             return new NewsSource(source);

@@ -9,6 +9,7 @@ import java.util.List;
 import it.unimib.worldnews.database.NewsDao;
 import it.unimib.worldnews.database.NewsRoomDatabase;
 import it.unimib.worldnews.model.News;
+import it.unimib.worldnews.model.NewsApiResponse;
 import it.unimib.worldnews.util.SharedPreferencesUtil;
 
 /**
@@ -33,7 +34,10 @@ public class NewsLocalDataSource extends BaseNewsLocalDataSource {
     @Override
     public void getNews() {
         NewsRoomDatabase.databaseWriteExecutor.execute(() -> {
-            newsCallback.onSuccessFromLocal(newsDao.getAll());
+            //TODO Fix this instruction
+            NewsApiResponse newsApiResponse = new NewsApiResponse();
+            newsApiResponse.setNewsList(newsDao.getAll());
+            newsCallback.onSuccessFromLocal(newsApiResponse);
         });
     }
 
@@ -83,13 +87,14 @@ public class NewsLocalDataSource extends BaseNewsLocalDataSource {
      * Saves the news in the local database.
      * The method is executed with an ExecutorService defined in NewsRoomDatabase class
      * because the database access cannot been executed in the main thread.
-     * @param newsList the list of news to be written in the local database.
+     * @param newsApiResponse the list of news to be written in the local database.
      */
     @Override
-    public void insertNews(List<News> newsList) {
+    public void insertNews(NewsApiResponse newsApiResponse) {
         NewsRoomDatabase.databaseWriteExecutor.execute(() -> {
             // Reads the news from the database
             List<News> allNews = newsDao.getAll();
+            List<News> newsList = newsApiResponse.getNewsList();
 
             if (newsList != null) {
 
@@ -102,8 +107,7 @@ public class NewsLocalDataSource extends BaseNewsLocalDataSource {
                         // The primary key and the favorite status is contained only in the News objects
                         // retrieved from the database, and not in the News objects downloaded from the
                         // Web Service. If the same news was already downloaded earlier, the following
-                        // line of code replaces the News object in newsList with the corresponding
-                        // line of code replaces the News object in newsList with the corresponding
+                        // line of code replaces the the News object in newsList with the corresponding
                         // News object saved in the database, so that it has the primary key and the
                         // favorite status.
                         newsList.set(newsList.indexOf(news), news);
@@ -122,7 +126,7 @@ public class NewsLocalDataSource extends BaseNewsLocalDataSource {
                 sharedPreferencesUtil.writeStringData(SHARED_PREFERENCES_FILE_NAME,
                         LAST_UPDATE, String.valueOf(System.currentTimeMillis()));
 
-                newsCallback.onSuccessFromLocal(newsList);
+                newsCallback.onSuccessFromLocal(newsApiResponse);
             }
         });
     }

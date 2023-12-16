@@ -13,7 +13,7 @@ import com.google.gson.annotations.SerializedName;
 import java.util.Objects;
 
 /**
- * Class to represent the news of NewsAPI.org (https://newsapi.org)
+ * Class to represent the news of NewsAPI.org (<a href="https://newsapi.org">...</a>)
  */
 @Entity
 public class News implements Parcelable {
@@ -212,7 +212,7 @@ public class News implements Parcelable {
         this.isFavorite = in.readByte() != 0;
     }
 
-    public static final Parcelable.Creator<News> CREATOR = new Parcelable.Creator<News>() {
+    public static final Creator<News> CREATOR = new Creator<News>() {
         @Override
         public News createFromParcel(Parcel source) {
             return new News(source);

@@ -27,9 +27,9 @@ public class NewsRemoteDataSource extends BaseNewsRemoteDataSource {
     }
 
     @Override
-    public void getNews(String country) {
+    public void getNews(String country, int page) {
         Call<NewsApiResponse> newsResponseCall = newsApiService.getNews(country,
-                TOP_HEADLINES_PAGE_SIZE_VALUE, apiKey);
+                TOP_HEADLINES_PAGE_SIZE_VALUE, page, apiKey);
 
         newsResponseCall.enqueue(new Callback<NewsApiResponse>() {
             @Override
