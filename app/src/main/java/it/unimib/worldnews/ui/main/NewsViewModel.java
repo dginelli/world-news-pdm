@@ -15,13 +15,19 @@ public class NewsViewModel extends ViewModel {
     private static final String TAG = NewsViewModel.class.getSimpleName();
 
     private final INewsRepositoryWithLiveData newsRepositoryWithLiveData;
-    private final int page;
+    private int page;
+    private int currentResults;
+    private int totalResults;
+    private boolean isLoading;
+    private boolean firstLoading;
     private MutableLiveData<Result> newsListLiveData;
     private MutableLiveData<Result> favoriteNewsListLiveData;
 
     public NewsViewModel(INewsRepositoryWithLiveData iNewsRepositoryWithLiveData) {
         this.newsRepositoryWithLiveData = iNewsRepositoryWithLiveData;
         this.page = 1;
+        this.totalResults = 0;
+        this.firstLoading = true;
     }
 
     /**
@@ -56,6 +62,10 @@ public class NewsViewModel extends ViewModel {
         newsRepositoryWithLiveData.updateNews(news);
     }
 
+    public void fetchNews(String country) {
+        newsRepositoryWithLiveData.fetchNews(country, page);
+    }
+
     /**
      * It uses the Repository to download the news list
      * and to associate it with the LiveData object.
@@ -85,5 +95,49 @@ public class NewsViewModel extends ViewModel {
      */
     public void deleteAllFavoriteNews() {
         newsRepositoryWithLiveData.deleteFavoriteNews();
+    }
+
+    public int getPage() {
+        return page;
+    }
+
+    public void setPage(int page) {
+        this.page = page;
+    }
+
+    public int getTotalResults() {
+        return totalResults;
+    }
+
+    public void setTotalResults(int totalResults) {
+        this.totalResults = totalResults;
+    }
+
+    public int getCurrentResults() {
+        return currentResults;
+    }
+
+    public void setCurrentResults(int currentResults) {
+        this.currentResults = currentResults;
+    }
+
+    public boolean isLoading() {
+        return isLoading;
+    }
+
+    public void setLoading(boolean loading) {
+        isLoading = loading;
+    }
+
+    public boolean isFirstLoading() {
+        return firstLoading;
+    }
+
+    public void setFirstLoading(boolean firstLoading) {
+        this.firstLoading = firstLoading;
+    }
+
+    public MutableLiveData<Result> getNewsResponseLiveData() {
+        return newsListLiveData;
     }
 }

@@ -8,15 +8,14 @@ import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
@@ -26,15 +25,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import it.unimib.worldnews.R;
-import it.unimib.worldnews.adapter.NewsArrayAdapter;
-import it.unimib.worldnews.adapter.NewsBaseAdapter;
 import it.unimib.worldnews.adapter.NewsListAdapter;
 import it.unimib.worldnews.model.News;
 import it.unimib.worldnews.model.Result;
-import it.unimib.worldnews.repository.INewsRepository;
-import it.unimib.worldnews.repository.NewsRepository;
 import it.unimib.worldnews.util.ErrorMessagesUtil;
-import it.unimib.worldnews.util.ResponseCallback;
 
 /**
  * Fragment that shows the favorite news of the user.
@@ -104,10 +98,10 @@ public class FavoriteNewsFragment extends Fragment {
 
         newsListAdapter =
             new NewsListAdapter(requireContext(), R.layout.favorite_news_list_item, newsList,
-                    news -> {
-                        news.setFavorite(false);
-                        newsViewModel.removeFromFavorite(news);
-                    });
+                news -> {
+                    news.setFavorite(false);
+                    newsViewModel.removeFromFavorite(news);
+                });
         listViewFavNews.setAdapter(newsListAdapter);
 
         progressBar.setVisibility(View.VISIBLE);
@@ -136,8 +130,11 @@ public class FavoriteNewsFragment extends Fragment {
             }
         });
 
-        listViewFavNews.setOnItemClickListener((parent, view1, position, id) ->
-                Snackbar.make(requireActivity().findViewById(android.R.id.content),
-                        newsList.get(position).getTitle(), Snackbar.LENGTH_SHORT).show());
+        listViewFavNews.setOnItemClickListener((parent, view1, position, id) -> {
+            FavoriteNewsFragmentDirections.ActionFavoriteNewsFragmentToNewsDetailFragment action =
+                    FavoriteNewsFragmentDirections.
+                            actionFavoriteNewsFragmentToNewsDetailFragment(newsList.get(position));
+            Navigation.findNavController(view).navigate(action);
+        });
     }
 }
