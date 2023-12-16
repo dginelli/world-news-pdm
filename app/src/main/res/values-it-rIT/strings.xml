@@ -44,6 +44,7 @@
     <string name="topic_news">Argomento</string>
     <string name="favorite_news">Preferiti</string>
     <string name="settings">Impostazioni</string>
+    <string name="news_details">Notizia</string>
     <string name="delete">Elimina</string>
     <string name="news">Notizie</string>
     <string name="personal_area">Area personale</string>
@@ -59,4 +60,9 @@
 
     <string name="news_added_to_favorite_list_message">News added to the favorite list</string>
     <string name="news_removed_from_favorite_list_message">News removed from the favorite list</string>
+
+    <!-- Content Description Strings -->
+    <string name="content_description_fav_addition">Aggiungi la news alla lista dei preferiti</string>
+    <string name="content_description_fav_delete">Rimuovi la news dalla lista dei preferiti</string>
+    <string name="content_description_news_cover_image">Immagine di copertina della news</string>
 </resources>

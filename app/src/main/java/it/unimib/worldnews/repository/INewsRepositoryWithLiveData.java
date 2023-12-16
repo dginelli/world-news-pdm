@@ -11,6 +11,8 @@ public interface INewsRepositoryWithLiveData {
 
     MutableLiveData<Result> fetchNews(String country, int page, long lastUpdate);
 
+    void fetchNews(String country, int page);
+
     MutableLiveData<Result> getFavoriteNews();
 
     void updateNews(News news);

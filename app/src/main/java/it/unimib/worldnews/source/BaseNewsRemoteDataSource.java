@@ -10,5 +10,5 @@ public abstract class BaseNewsRemoteDataSource {
         this.newsCallback = newsCallback;
     }
 
-    public abstract void getNews(String country);
+    public abstract void getNews(String country, int page);
 }

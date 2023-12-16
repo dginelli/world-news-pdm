@@ -2,6 +2,7 @@ package it.unimib.worldnews.service;
 
 import static it.unimib.worldnews.util.Constants.TOP_HEADLINES_COUNTRY_PARAMETER;
 import static it.unimib.worldnews.util.Constants.TOP_HEADLINES_ENDPOINT;
+import static it.unimib.worldnews.util.Constants.TOP_HEADLINES_PAGE_PARAMETER;
 import static it.unimib.worldnews.util.Constants.TOP_HEADLINES_PAGE_SIZE_PARAMETER;
 
 import it.unimib.worldnews.model.NewsApiResponse;
@@ -18,5 +19,6 @@ public interface NewsApiService {
     Call<NewsApiResponse> getNews(
             @Query(TOP_HEADLINES_COUNTRY_PARAMETER) String country,
             @Query(TOP_HEADLINES_PAGE_SIZE_PARAMETER) int pageSize,
+            @Query(TOP_HEADLINES_PAGE_PARAMETER) int page,
             @Header("Authorization") String apiKey);
 }
