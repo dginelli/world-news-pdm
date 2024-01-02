@@ -17,7 +17,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
-import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -40,7 +39,7 @@ import it.unimib.worldnews.model.News;
 import it.unimib.worldnews.model.NewsApiResponse;
 import it.unimib.worldnews.model.NewsResponse;
 import it.unimib.worldnews.model.Result;
-import it.unimib.worldnews.repository.INewsRepositoryWithLiveData;
+import it.unimib.worldnews.repository.news.INewsRepositoryWithLiveData;
 import it.unimib.worldnews.util.ErrorMessagesUtil;
 import it.unimib.worldnews.util.ServiceLocator;
 import it.unimib.worldnews.util.SharedPreferencesUtil;
@@ -88,17 +87,21 @@ public class CountryNewsFragment extends Fragment {
         sharedPreferencesUtil = new SharedPreferencesUtil(requireActivity().getApplication());
 
         INewsRepositoryWithLiveData newsRepositoryWithLiveData =
-            ServiceLocator.getInstance().getNewsRepository(
-                requireActivity().getApplication(),
-                requireActivity().getApplication().getResources().getBoolean(R.bool.debug_mode)
-            );
+                ServiceLocator.getInstance().getNewsRepository(
+                        requireActivity().getApplication(),
+                        requireActivity().getApplication().getResources().getBoolean(R.bool.debug_mode)
+                );
 
-        // This is the way to create a ViewModel with custom parameters
-        // (see NewsViewModelFactory class for the implementation details)
-        newsViewModel = new ViewModelProvider(
-                requireActivity(),
-                new NewsViewModelFactory(newsRepositoryWithLiveData)).get(NewsViewModel.class);
-
+        if (newsRepositoryWithLiveData != null) {
+            // This is the way to create a ViewModel with custom parameters
+            // (see NewsViewModelFactory class for the implementation details)
+            newsViewModel = new ViewModelProvider(
+                    requireActivity(),
+                    new NewsViewModelFactory(newsRepositoryWithLiveData)).get(NewsViewModel.class);
+        } else {
+            Snackbar.make(requireActivity().findViewById(android.R.id.content),
+                    getString(R.string.unexpected_error), Snackbar.LENGTH_SHORT).show();
+        }
         newsList = new ArrayList<>();
     }
 
@@ -116,8 +119,7 @@ public class CountryNewsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         String country = sharedPreferencesUtil.readStringData(
-            SHARED_PREFERENCES_FILE_NAME, SHARED_PREFERENCES_COUNTRY_OF_INTEREST
-        );
+                SHARED_PREFERENCES_FILE_NAME, SHARED_PREFERENCES_COUNTRY_OF_INTEREST);
 
         requireActivity().addMenuProvider(new MenuProvider() {
             @Override
@@ -175,7 +177,7 @@ public class CountryNewsFragment extends Fragment {
             result -> {
                 if (result.isSuccess()) {
 
-                    NewsResponse newsResponse = ((Result.Success) result).getData();
+                    NewsResponse newsResponse = ((Result.NewsResponseSuccess) result).getData();
                     List<News> fetchedNews = newsResponse.getNewsList();
 
                     if (!newsViewModel.isLoading()) {
@@ -221,7 +223,6 @@ public class CountryNewsFragment extends Fragment {
             });
 
         recyclerViewCountryNews.addOnScrollListener(new RecyclerView.OnScrollListener() {
-
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
@@ -263,7 +264,7 @@ public class CountryNewsFragment extends Fragment {
     }
 
     /**
-     * It checks if the device is connected to Internet.
+     * Checks if the device is connected to Internet.
      * See: <a href="https://developer.android.com/training/monitoring-device-state/connectivity-status-type#DetermineConnection">...</a>
      * @return true if the device is connected to Internet; false otherwise.
      */
