@@ -20,7 +20,7 @@ import com.google.android.material.snackbar.Snackbar;
 
 import it.unimib.worldnews.R;
 import it.unimib.worldnews.databinding.FragmentSettingsBinding;
-import it.unimib.worldnews.repository.user.IUserRepository;
+import it.unimib.worldnews.data.repository.user.IUserRepository;
 import it.unimib.worldnews.ui.welcome.UserViewModel;
 import it.unimib.worldnews.ui.welcome.UserViewModelFactory;
 import it.unimib.worldnews.util.ServiceLocator;

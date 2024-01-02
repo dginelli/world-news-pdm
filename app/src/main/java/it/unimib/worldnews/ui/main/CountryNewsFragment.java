@@ -39,7 +39,7 @@ import it.unimib.worldnews.model.News;
 import it.unimib.worldnews.model.NewsApiResponse;
 import it.unimib.worldnews.model.NewsResponse;
 import it.unimib.worldnews.model.Result;
-import it.unimib.worldnews.repository.news.INewsRepositoryWithLiveData;
+import it.unimib.worldnews.data.repository.news.INewsRepositoryWithLiveData;
 import it.unimib.worldnews.util.ErrorMessagesUtil;
 import it.unimib.worldnews.util.ServiceLocator;
 import it.unimib.worldnews.util.SharedPreferencesUtil;

@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
-import it.unimib.worldnews.repository.user.IUserRepository;
+import it.unimib.worldnews.data.repository.user.IUserRepository;
 
 
 /**

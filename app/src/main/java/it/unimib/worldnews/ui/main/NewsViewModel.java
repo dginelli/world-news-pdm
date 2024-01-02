@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel;
 
 import it.unimib.worldnews.model.News;
 import it.unimib.worldnews.model.Result;
-import it.unimib.worldnews.repository.news.INewsRepositoryWithLiveData;
+import it.unimib.worldnews.data.repository.news.INewsRepositoryWithLiveData;
 
 /**
  * ViewModel to manage the list of News and the list of favorite News.

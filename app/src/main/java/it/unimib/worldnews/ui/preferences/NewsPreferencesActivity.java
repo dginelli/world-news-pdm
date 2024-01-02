@@ -51,7 +51,7 @@ import java.util.Set;
 import it.unimib.worldnews.R;
 import it.unimib.worldnews.model.News;
 import it.unimib.worldnews.model.NewsSource;
-import it.unimib.worldnews.repository.user.IUserRepository;
+import it.unimib.worldnews.data.repository.user.IUserRepository;
 import it.unimib.worldnews.ui.main.MainActivityWithBottomNavigationView;
 import it.unimib.worldnews.ui.welcome.UserViewModel;
 import it.unimib.worldnews.ui.welcome.UserViewModelFactory;

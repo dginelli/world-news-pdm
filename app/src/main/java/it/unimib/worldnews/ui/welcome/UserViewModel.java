@@ -7,7 +7,7 @@ import java.util.Set;
 
 import it.unimib.worldnews.model.Result;
 import it.unimib.worldnews.model.User;
-import it.unimib.worldnews.repository.user.IUserRepository;
+import it.unimib.worldnews.data.repository.user.IUserRepository;
 
 public class UserViewModel extends ViewModel {
     private static final String TAG = UserViewModel.class.getSimpleName();

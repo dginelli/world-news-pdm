@@ -51,7 +51,7 @@ import it.unimib.worldnews.R;
 import it.unimib.worldnews.model.Result;
 import it.unimib.worldnews.model.User;
 
-import it.unimib.worldnews.repository.user.IUserRepository;
+import it.unimib.worldnews.data.repository.user.IUserRepository;
 import it.unimib.worldnews.ui.main.MainActivityWithBottomNavigationView;
 import it.unimib.worldnews.ui.preferences.NewsPreferencesActivity;
 import it.unimib.worldnews.util.DataEncryptionUtil;
