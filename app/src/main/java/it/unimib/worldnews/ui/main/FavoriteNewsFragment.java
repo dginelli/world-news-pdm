@@ -28,7 +28,9 @@ import it.unimib.worldnews.R;
 import it.unimib.worldnews.adapter.NewsListAdapter;
 import it.unimib.worldnews.model.News;
 import it.unimib.worldnews.model.Result;
+import it.unimib.worldnews.util.Constants;
 import it.unimib.worldnews.util.ErrorMessagesUtil;
+import it.unimib.worldnews.util.SharedPreferencesUtil;
 
 /**
  * Fragment that shows the favorite news of the user.
@@ -97,14 +99,20 @@ public class FavoriteNewsFragment extends Fragment {
         ListView listViewFavNews = view.findViewById(R.id.listview_fav_news);
 
         newsListAdapter =
-            new NewsListAdapter(requireContext(), R.layout.favorite_news_list_item, newsList,
-                news -> {
-                    news.setFavorite(false);
-                    newsViewModel.removeFromFavorite(news);
-                });
+                new NewsListAdapter(requireContext(), R.layout.favorite_news_list_item, newsList,
+                        news -> {
+                            news.setFavorite(false);
+                            newsViewModel.removeFromFavorite(news);
+                        });
         listViewFavNews.setAdapter(newsListAdapter);
 
         progressBar.setVisibility(View.VISIBLE);
+
+        SharedPreferencesUtil sharedPreferencesUtil =
+                new SharedPreferencesUtil(requireActivity().getApplication());
+
+        boolean isFirstLoading = sharedPreferencesUtil.readBooleanData(Constants.SHARED_PREFERENCES_FILE_NAME,
+                Constants.SHARED_PREFERENCES_FIRST_LOADING);
 
         // Observe the LiveData associated with the MutableLiveData containing the favorite news
         // returned by the method getFavoriteNewsLiveData() of NewsViewModel class.
@@ -113,12 +121,16 @@ public class FavoriteNewsFragment extends Fragment {
         // In this case, getViewLifecycleOwner() refers to
         // androidx.fragment.app.FragmentViewLifecycleOwner and not to the Fragment itself.
         // You can read more details here: https://stackoverflow.com/a/58663143/4255576
-        newsViewModel.getFavoriteNewsLiveData().observe(getViewLifecycleOwner(), result -> {
+        newsViewModel.getFavoriteNewsLiveData(isFirstLoading).observe(getViewLifecycleOwner(), result -> {
             if (result != null) {
                 if (result.isSuccess()) {
                     newsList.clear();
-                    newsList.addAll(((Result.Success)result).getData().getNewsList());
+                    newsList.addAll(((Result.NewsResponseSuccess)result).getData().getNewsList());
                     newsListAdapter.notifyDataSetChanged();
+                    if (isFirstLoading) {
+                        sharedPreferencesUtil.writeBooleanData(Constants.SHARED_PREFERENCES_FILE_NAME,
+                                Constants.SHARED_PREFERENCES_FIRST_LOADING, false);
+                    }
                 } else {
                     ErrorMessagesUtil errorMessagesUtil =
                             new ErrorMessagesUtil(requireActivity().getApplication());
