@@ -1,15 +1,18 @@
 package it.unimib.worldnews.ui.preferences;
 
 import static it.unimib.worldnews.util.Constants.BUSINESS;
+import static it.unimib.worldnews.util.Constants.ENCRYPTED_SHARED_PREFERENCES_FILE_NAME;
 import static it.unimib.worldnews.util.Constants.ENTERTAINMENT;
 import static it.unimib.worldnews.util.Constants.FRANCE;
 import static it.unimib.worldnews.util.Constants.GENERAL;
 import static it.unimib.worldnews.util.Constants.GERMANY;
 import static it.unimib.worldnews.util.Constants.HEALTH;
+import static it.unimib.worldnews.util.Constants.ID_TOKEN;
 import static it.unimib.worldnews.util.Constants.ITALY;
 import static it.unimib.worldnews.util.Constants.SCIENCE;
 import static it.unimib.worldnews.util.Constants.SHARED_PREFERENCES_COUNTRY_OF_INTEREST;
 import static it.unimib.worldnews.util.Constants.SHARED_PREFERENCES_FILE_NAME;
+import static it.unimib.worldnews.util.Constants.SHARED_PREFERENCES_FIRST_LOADING;
 import static it.unimib.worldnews.util.Constants.SHARED_PREFERENCES_TOPICS_OF_INTEREST;
 import static it.unimib.worldnews.util.Constants.SPORTS;
 import static it.unimib.worldnews.util.Constants.TECHNOLOGY;
@@ -21,21 +24,25 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.Spinner;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Map;
@@ -44,7 +51,12 @@ import java.util.Set;
 import it.unimib.worldnews.R;
 import it.unimib.worldnews.model.News;
 import it.unimib.worldnews.model.NewsSource;
+import it.unimib.worldnews.repository.user.IUserRepository;
 import it.unimib.worldnews.ui.main.MainActivityWithBottomNavigationView;
+import it.unimib.worldnews.ui.welcome.UserViewModel;
+import it.unimib.worldnews.ui.welcome.UserViewModelFactory;
+import it.unimib.worldnews.util.DataEncryptionUtil;
+import it.unimib.worldnews.util.ServiceLocator;
 import it.unimib.worldnews.util.SharedPreferencesUtil;
 
 /**
@@ -56,7 +68,6 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
     public static final String EXTRA_BUTTON_PRESSED_COUNTER_KEY = "BUTTON_PRESSED_COUNTER_KEY";
     public static final String EXTRA_NEWS_KEY = "NEWS_KEY";
-    public static final String EXTRA_BUNDLE_INT = "BUNDLE_INT";
 
     private Spinner spinnerCountries;
     private CheckBox checkboxBusiness;
@@ -67,6 +78,8 @@ public class NewsPreferencesActivity extends AppCompatActivity {
     private CheckBox checkboxSport;
     private CheckBox checkboxTechnology;
 
+    private LinearProgressIndicator linearProgressIndicator;
+
     private int buttonNextPressedCounter;
     private News news;
 
@@ -75,6 +88,8 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
     private ActivityResultLauncher<String[]> multiplePermissionLauncher;
     private ActivityResultContracts.RequestMultiplePermissions multiplePermissionsContract;
+
+    private UserViewModel userViewModel;
 
     private final String[] PERMISSIONS = {
             Manifest.permission.SEND_SMS,
@@ -89,6 +104,11 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_news_preferences_constraint_layout);
 
+        IUserRepository userRepository = ServiceLocator.getInstance().
+                getUserRepository(getApplication());
+        userViewModel = new ViewModelProvider(
+                this, new UserViewModelFactory(userRepository)).get(UserViewModel.class);
+
         spinnerCountries = findViewById(R.id.spinner_countries);
 
         checkboxBusiness = findViewById(R.id.checkbox_business);
@@ -99,7 +119,17 @@ public class NewsPreferencesActivity extends AppCompatActivity {
         checkboxSport = findViewById(R.id.checkbox_sport);
         checkboxTechnology = findViewById(R.id.checkbox_technology);
 
+        linearProgressIndicator = findViewById(R.id.progress_bar);
+
         final Button buttonNext = findViewById(R.id.button_next);
+
+        linearProgressIndicator.setVisibility(View.VISIBLE);
+
+        userViewModel.getUserPreferences(userViewModel.getLoggedUser().getIdToken()).
+            observe(this, result -> {
+                linearProgressIndicator.setVisibility(View.GONE);
+                setViewsChecked();
+            });
 
         // Doc is here: https://developer.android.com/training/location/retrieve-current
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -115,8 +145,6 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
             Log.d(TAG, "savedInstanceState is null, News: " + news);
         }
-
-        setViewsChecked();
 
         singlePermissionContract = new ActivityResultContracts.RequestPermission();
         multiplePermissionsContract = new ActivityResultContracts.RequestMultiplePermissions();
@@ -146,16 +174,6 @@ public class NewsPreferencesActivity extends AppCompatActivity {
         });
 
         buttonNext.setOnClickListener(view -> {
-
-            // This is an example to send back the result when the Activity is started for getting a result back
-            Intent intentForResult = getIntent();
-            if (intentForResult != null) {
-                intentForResult.putExtra("ACTIVITY_FOR_RESULT", spinnerCountries.getSelectedItem().toString());
-                setResult(Activity.RESULT_OK, intentForResult);
-                finish();
-            }
-
-            getLocation();
             buttonNextPressedCounter++;
             news.setTitle("Button next has been pressed " + buttonNextPressedCounter + " times");
             if (isCountryOfInterestSelected() && isTopicOfInterestSelected()) {
@@ -166,16 +184,9 @@ public class NewsPreferencesActivity extends AppCompatActivity {
                 news.setDate(GregorianCalendar.getInstance().getTime().toString());
                 Log.d(TAG, "Button next has been pressed " + buttonNextPressedCounter + " times");
                 Log.d(TAG, "onClick, News: " + news);
-
                 Intent intent = new Intent(this, MainActivityWithBottomNavigationView.class);
                 intent.putExtra(EXTRA_BUTTON_PRESSED_COUNTER_KEY, buttonNextPressedCounter);
                 intent.putExtra(EXTRA_NEWS_KEY, news);
-
-                // Example to show another way to add data in an Intent
-                Bundle bundle = new Bundle();
-                bundle.putInt(EXTRA_BUNDLE_INT, 2023);
-                intent.putExtras(bundle);
-
                 startActivity(intent);
                 finish();
             }
@@ -189,7 +200,7 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
         boolean singlePermissionsStatus =
                 ActivityCompat.checkSelfPermission(this,
-                        Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+                Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
 
         boolean multiplePermissionsStatus =
                 ActivityCompat.checkSelfPermission(this,
@@ -253,6 +264,8 @@ public class NewsPreferencesActivity extends AppCompatActivity {
             return true;
         }
 
+        getLocation();
+
         Snackbar.make(findViewById(android.R.id.content), R.string.alert_text_topic_of_interest,
                 Snackbar.LENGTH_SHORT).show();
         return false;
@@ -298,6 +311,21 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
         sharedPreferencesUtil.writeStringSetData(SHARED_PREFERENCES_FILE_NAME,
                 SHARED_PREFERENCES_TOPICS_OF_INTEREST, topics);
+
+        sharedPreferencesUtil.writeBooleanData(SHARED_PREFERENCES_FILE_NAME,
+                SHARED_PREFERENCES_FIRST_LOADING, true);
+
+        DataEncryptionUtil dataEncryptionUtil = new DataEncryptionUtil(getApplication());
+
+        String idToken = null;
+        try {
+            idToken = dataEncryptionUtil.readSecretDataWithEncryptedSharedPreferences(
+                    ENCRYPTED_SHARED_PREFERENCES_FILE_NAME, ID_TOKEN);
+        } catch (GeneralSecurityException | IOException e) {
+            e.printStackTrace();
+        }
+
+        userViewModel.saveUserPreferences(countryShortName, topics, idToken);
     }
 
     /**
@@ -309,15 +337,13 @@ public class NewsPreferencesActivity extends AppCompatActivity {
 
         String countryOfInterest = sharedPreferencesUtil.readStringData(
                 SHARED_PREFERENCES_FILE_NAME, SHARED_PREFERENCES_COUNTRY_OF_INTEREST);
-        Set<String> topicsOfInterest = sharedPreferencesUtil.readStringSetData(
-                SHARED_PREFERENCES_TOPICS_OF_INTEREST,
-                null);
+        Set<String> topicsOfInterest = sharedPreferencesUtil.readStringSetData(SHARED_PREFERENCES_FILE_NAME,
+                SHARED_PREFERENCES_TOPICS_OF_INTEREST);
 
         if (countryOfInterest != null) {
             spinnerCountries.setSelection(
                     getSpinnerPositionBasedOnValue(getUserVisibleCountryOfInterest(countryOfInterest)));
         }
-
         if (topicsOfInterest != null) {
             if (topicsOfInterest.contains(BUSINESS)) {
                 checkboxBusiness.setChecked(true);
