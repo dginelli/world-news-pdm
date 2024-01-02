@@ -18,14 +18,14 @@ import java.security.GeneralSecurityException;
 
 /**
  * Utility class to encrypt data using EncryptedSharedPreferences and EncryptedFile.
- * Doc can be read here: <a href="https://developer.android.com/topic/security/data">...</a>
+ * Doc can be read here: https://developer.android.com/topic/security/data
  */
 public class DataEncryptionUtil {
 
-    private final Context context;
+    private final Application application;
 
     public DataEncryptionUtil(Application application) {
-        this.context = application.getApplicationContext();
+        this.application = application;
     }
 
     /**
@@ -40,14 +40,14 @@ public class DataEncryptionUtil {
                                                               String key, String value)
             throws GeneralSecurityException, IOException {
 
-        MasterKey mainKey = new MasterKey.Builder(context)
+        MasterKey mainKey = new MasterKey.Builder(application)
                 .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
                 .build();
 
         // Creates a file with this name, or replaces an existing file that has the same name.
         // Note that the file name cannot contain path separators.
         SharedPreferences sharedPreferences = EncryptedSharedPreferences.create(
-                context,
+                application,
                 sharedPreferencesFileName,
                 mainKey,
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
@@ -71,12 +71,12 @@ public class DataEncryptionUtil {
                                                                String key)
             throws GeneralSecurityException, IOException {
 
-        MasterKey mainKey = new MasterKey.Builder(context)
+        MasterKey mainKey = new MasterKey.Builder(application)
                 .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
                 .build();
 
         SharedPreferences sharedPreferences = EncryptedSharedPreferences.create(
-                context,
+                application,
                 sharedPreferencesFileName,
                 mainKey,
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
@@ -96,13 +96,13 @@ public class DataEncryptionUtil {
     public void writeSecreteDataOnFile(String fileName, String data)
             throws GeneralSecurityException, IOException {
 
-        MasterKey mainKey = new MasterKey.Builder(context)
+        MasterKey mainKey = new MasterKey.Builder(application)
                 .setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build();
 
         // Creates a file with this name, or replaces an existing file that has the same name.
         // Note that the file name cannot contain path separators.
-        File fileToWrite = new File(context.getFilesDir(), fileName);
-        EncryptedFile encryptedFile = new EncryptedFile.Builder(context,
+        File fileToWrite = new File(application.getFilesDir(), fileName);
+        EncryptedFile encryptedFile = new EncryptedFile.Builder(application,
                 fileToWrite,
                 mainKey,
                 EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
@@ -131,12 +131,12 @@ public class DataEncryptionUtil {
 
         // Although you can define your own key generation parameter specification, it's
         // recommended that you use the value specified here.
-        MasterKey mainKey = new MasterKey.Builder(context)
+        MasterKey mainKey = new MasterKey.Builder(application)
                 .setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build();
 
-        File file = new File(context.getFilesDir(), fileName);
+        File file = new File(application.getFilesDir(), fileName);
 
-        EncryptedFile encryptedFile = new EncryptedFile.Builder(context,
+        EncryptedFile encryptedFile = new EncryptedFile.Builder(application,
                 file,
                 mainKey,
                 EncryptedFile.FileEncryptionScheme.AES256_GCM_HKDF_4KB
@@ -155,5 +155,22 @@ public class DataEncryptionUtil {
             return new String(plaintext, StandardCharsets.UTF_8);
         }
         return null;
+    }
+
+    /**
+     * Deletes data saved in files created with EncryptedSharedPreferences API
+     * and in normal text files where the information is encrypted.
+     * @param encryptedSharedPreferencesFileName The EncryptedSharedPreferences file name
+     *                                           where the information is saved.
+     * @param encryptedFileDataFileName The file name where the information is saved.
+     */
+    public void deleteAll(String encryptedSharedPreferencesFileName, String encryptedFileDataFileName) {
+        SharedPreferences sharedPref = application.getSharedPreferences(encryptedSharedPreferencesFileName,
+                Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.clear();
+        editor.apply();
+
+        new File(application.getFilesDir(), encryptedFileDataFileName).delete();
     }
 }
