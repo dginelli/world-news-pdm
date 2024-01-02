@@ -7,18 +7,28 @@
     <fragment
         android:id="@+id/loginFragment"
         android:name="it.unimib.worldnews.ui.welcome.LoginFragment"
-        android:label="fragment_login"
+        android:label="@string/app_name"
         tools:layout="@layout/fragment_login" >
         <action
             android:id="@+id/navigate_to_mainActivityWithBottomNavigationView"
-            app:destination="@id/mainActivityWithBottomNavigationView" >
-        </action>
+            app:destination="@id/mainActivityWithBottomNavigationView"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim"/>
         <action
             android:id="@+id/navigate_to_newsPreferencesActivity"
             app:destination="@id/newsPreferencesActivity" />
         <action
             android:id="@+id/navigate_to_mainActivityWithNavigationDrawer"
             app:destination="@id/mainActivityWithNavigationDrawer" />
+        <action
+            android:id="@+id/navigate_to_registrationFragment"
+            app:destination="@id/registrationFragment"
+            app:enterAnim="@anim/nav_default_enter_anim"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/nav_default_pop_exit_anim" />
     </fragment>
     <activity
         android:id="@+id/mainActivityWithBottomNavigationView"
@@ -35,4 +45,13 @@
         android:id="@+id/mainActivityWithNavigationDrawer"
         android:name="it.unimib.worldnews.ui.main.MainActivityWithNavigationDrawer"
         android:label="MainActivityWithNavigationDrawer" />
+    <fragment
+        android:id="@+id/registrationFragment"
+        android:name="it.unimib.worldnews.ui.welcome.RegistrationFragment"
+        android:label="@string/app_name"
+        tools:layout="@layout/fragment_registration" >
+        <action
+            android:id="@+id/navigation_to_newsPreferencesActivity"
+            app:destination="@id/newsPreferencesActivity" />
+    </fragment>
 </navigation>
