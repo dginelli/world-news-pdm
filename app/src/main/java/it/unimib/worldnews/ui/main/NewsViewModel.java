@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel;
 
 import it.unimib.worldnews.model.News;
 import it.unimib.worldnews.model.Result;
-import it.unimib.worldnews.repository.INewsRepositoryWithLiveData;
+import it.unimib.worldnews.repository.news.INewsRepositoryWithLiveData;
 
 /**
  * ViewModel to manage the list of News and the list of favorite News.
@@ -47,9 +47,9 @@ public class NewsViewModel extends ViewModel {
      * list of favorite news to the Fragment/Activity.
      * @return The LiveData object associated with the list of favorite news.
      */
-    public MutableLiveData<Result> getFavoriteNewsLiveData() {
+    public MutableLiveData<Result> getFavoriteNewsLiveData(boolean isFirstLoading) {
         if (favoriteNewsListLiveData == null) {
-            getFavoriteNews();
+            getFavoriteNews(isFirstLoading);
         }
         return favoriteNewsListLiveData;
     }
@@ -78,8 +78,8 @@ public class NewsViewModel extends ViewModel {
      * It uses the Repository to get the list of favorite news
      * and to associate it with the LiveData object.
      */
-    private void getFavoriteNews() {
-        favoriteNewsListLiveData = newsRepositoryWithLiveData.getFavoriteNews();
+    private void getFavoriteNews(boolean firstLoading) {
+        favoriteNewsListLiveData = newsRepositoryWithLiveData.getFavoriteNews(firstLoading);
     }
 
     /**
