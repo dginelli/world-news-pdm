@@ -42,7 +42,12 @@
         android:id="@+id/fragment_settings"
         android:name="it.unimib.worldnews.ui.main.SettingsFragment"
         android:label="@string/settings"
-        tools:layout="@layout/fragment_settings" />
+        tools:layout="@layout/fragment_settings" >
+        <action
+            android:id="@+id/action_fragment_settings_to_welcomeActivity"
+            app:destination="@id/welcomeActivity"
+            app:launchSingleTop="true" />
+    </fragment>
     <include app:graph="@navigation/welcome_nav_graph" />
     <fragment
         android:id="@+id/fragment_news_details"
@@ -53,4 +58,9 @@
             android:name="news"
             app:argType="it.unimib.worldnews.model.News" />
     </fragment>
+    <activity
+        android:id="@+id/welcomeActivity"
+        android:name="it.unimib.worldnews.ui.welcome.WelcomeActivity"
+        android:label="activity_welcome"
+        tools:layout="@layout/activity_welcome" />
 </navigation>
