@@ -1,4 +1,4 @@
-package it.unimib.worldnews.repository;
+package it.unimib.worldnews.repository.news;
 
 import static it.unimib.worldnews.util.Constants.NEWS_API_TEST_JSON_FILE;
 
@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.List;
 
 import it.unimib.worldnews.R;
+
 import it.unimib.worldnews.database.NewsDao;
 import it.unimib.worldnews.database.NewsRoomDatabase;
 import it.unimib.worldnews.model.News;
@@ -24,14 +25,14 @@ import it.unimib.worldnews.util.ServiceLocator;
 public class NewsMockRepository implements INewsRepository {
 
     private final Application application;
-    private final ResponseCallback responseCallback;
+    private final NewsResponseCallback newsResponseCallback;
     private final NewsDao newsDao;
     private final JSONParserUtil.JsonParserType jsonParserType;
 
-    public NewsMockRepository(Application application, ResponseCallback responseCallback,
+    public NewsMockRepository(Application application, NewsResponseCallback newsResponseCallback,
                               JSONParserUtil.JsonParserType jsonParserType) {
         this.application = application;
-        this.responseCallback = responseCallback;
+        this.newsResponseCallback = newsResponseCallback;
         NewsRoomDatabase newsRoomDatabase = ServiceLocator.getInstance().getNewsDao(application);
         this.newsDao = newsRoomDatabase.newsDao();
         this.jsonParserType = jsonParserType;
@@ -66,14 +67,14 @@ public class NewsMockRepository implements INewsRepository {
                 }
                 break;
             case JSON_ERROR:
-                responseCallback.onFailure(application.getString(R.string.error_retrieving_news));
+                newsResponseCallback.onFailure(application.getString(R.string.error_retrieving_news));
                 break;
         }
 
         if (newsApiResponse != null) {
             saveDataInDatabase(newsApiResponse.getNewsList());
         } else {
-            responseCallback.onFailure(application.getString(R.string.error_retrieving_news));
+            newsResponseCallback.onFailure(application.getString(R.string.error_retrieving_news));
         }
     }
 
@@ -86,7 +87,7 @@ public class NewsMockRepository implements INewsRepository {
     public void updateNews(News news) {
         NewsRoomDatabase.databaseWriteExecutor.execute(() -> {
             newsDao.updateSingleFavoriteNews(news);
-            responseCallback.onNewsFavoriteStatusChanged(news);
+            newsResponseCallback.onNewsFavoriteStatusChanged(news);
         });
     }
 
@@ -96,7 +97,7 @@ public class NewsMockRepository implements INewsRepository {
     @Override
     public void getFavoriteNews() {
         NewsRoomDatabase.databaseWriteExecutor.execute(() -> {
-            responseCallback.onSuccess(newsDao.getFavoriteNews(), System.currentTimeMillis());
+            newsResponseCallback.onSuccess(newsDao.getFavoriteNews(), System.currentTimeMillis());
         });
     }
 
@@ -111,7 +112,7 @@ public class NewsMockRepository implements INewsRepository {
                 news.setFavorite(false);
             }
             newsDao.updateListFavoriteNews(favoriteNews);
-            responseCallback.onSuccess(newsDao.getFavoriteNews(), System.currentTimeMillis());
+            newsResponseCallback.onSuccess(newsDao.getFavoriteNews(), System.currentTimeMillis());
         });
     }
 
@@ -151,7 +152,7 @@ public class NewsMockRepository implements INewsRepository {
                 newsList.get(i).setId(insertedNewsIds.get(i));
             }
 
-            responseCallback.onSuccess(newsList, System.currentTimeMillis());
+            newsResponseCallback.onSuccess(newsList, System.currentTimeMillis());
         });
     }
 
@@ -162,7 +163,7 @@ public class NewsMockRepository implements INewsRepository {
      */
     private void readDataFromDatabase(long lastUpdate) {
         NewsRoomDatabase.databaseWriteExecutor.execute(() -> {
-            responseCallback.onSuccess(newsDao.getAll(), lastUpdate);
+            newsResponseCallback.onSuccess(newsDao.getAll(), lastUpdate);
         });
     }
 }

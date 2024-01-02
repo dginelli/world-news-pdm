@@ -8,12 +8,13 @@ import androidx.room.Embedded;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.google.firebase.database.Exclude;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Objects;
 
 /**
- * Class to represent the news of NewsAPI.org (<a href="https://newsapi.org">...</a>)
+ * Class to represent the news of NewsAPI.org (https://newsapi.org)
  */
 @Entity
 public class News implements Parcelable {
@@ -38,10 +39,13 @@ public class News implements Parcelable {
     @ColumnInfo(name = "is_favorite")
     private boolean isFavorite;
 
+    @ColumnInfo(name = "is_synchronized")
+    private boolean isSynchronized;
+
     public News() {}
 
     public News(String author, String title, NewsSource source, String description, String url,
-                String urlToImage, String date, String content, boolean isFavorite) {
+                String urlToImage, String date, String content, boolean isFavorite, boolean isSynchronized) {
         this.author = author;
         this.title = title;
         this.source = source;
@@ -51,11 +55,12 @@ public class News implements Parcelable {
         this.date = date;
         this.content = content;
         this.isFavorite = isFavorite;
+        this.isSynchronized = isSynchronized;
     }
 
     public News(String author, String title, NewsSource source, String date) {
         this(author, title, source, null, null, null, date,
-                null, false);
+                null, false, false);
     }
 
     public long getId() {
@@ -138,6 +143,15 @@ public class News implements Parcelable {
         isFavorite = favorite;
     }
 
+    @Exclude
+    public boolean isSynchronized() {
+        return isSynchronized;
+    }
+
+    public void setSynchronized(boolean aSynchronized) {
+        isSynchronized = aSynchronized;
+    }
+
     @Override
     public String toString() {
         return "News{" +
@@ -151,6 +165,7 @@ public class News implements Parcelable {
                 ", date='" + date + '\'' +
                 ", content='" + content + '\'' +
                 ", isFavorite=" + isFavorite +
+                ", isSynchronized=" + isSynchronized +
                 '}';
     }
 
@@ -184,6 +199,7 @@ public class News implements Parcelable {
         dest.writeString(this.date);
         dest.writeString(this.content);
         dest.writeByte(this.isFavorite ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.isSynchronized ? (byte) 1 : (byte) 0);
     }
 
     public void readFromParcel(Parcel source) {
@@ -197,6 +213,7 @@ public class News implements Parcelable {
         this.date = source.readString();
         this.content = source.readString();
         this.isFavorite = source.readByte() != 0;
+        this.isSynchronized = source.readByte() != 0;
     }
 
     protected News(Parcel in) {
@@ -210,6 +227,7 @@ public class News implements Parcelable {
         this.date = in.readString();
         this.content = in.readString();
         this.isFavorite = in.readByte() != 0;
+        this.isSynchronized = in.readByte() != 0;
     }
 
     public static final Creator<News> CREATOR = new Creator<News>() {

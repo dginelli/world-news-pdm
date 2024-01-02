@@ -1,4 +1,4 @@
-package it.unimib.worldnews.source;
+package it.unimib.worldnews.source.news;
 
 /**
  * Base class to get news from a remote source.

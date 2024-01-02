@@ -1,4 +1,4 @@
-package it.unimib.worldnews.source;
+package it.unimib.worldnews.source.news;
 
 import java.util.List;
 
@@ -21,4 +21,6 @@ public abstract class BaseNewsLocalDataSource {
     public abstract void updateNews(News news);
     public abstract void deleteFavoriteNews();
     public abstract void insertNews(NewsApiResponse newsApiResponse);
+    public abstract void insertNews(List<News> newsList);
+    public abstract void deleteAll();
 }

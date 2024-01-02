@@ -1,4 +1,4 @@
-package it.unimib.worldnews.repository;
+package it.unimib.worldnews.repository.news;
 
 import static it.unimib.worldnews.util.Constants.FRESH_TIMEOUT;
 import static it.unimib.worldnews.util.Constants.TOP_HEADLINES_PAGE_SIZE_VALUE;
@@ -11,10 +11,12 @@ import androidx.annotation.NonNull;
 import java.util.List;
 
 import it.unimib.worldnews.R;
+
 import it.unimib.worldnews.database.NewsDao;
 import it.unimib.worldnews.database.NewsRoomDatabase;
 import it.unimib.worldnews.model.News;
 import it.unimib.worldnews.model.NewsApiResponse;
+
 import it.unimib.worldnews.service.NewsApiService;
 import it.unimib.worldnews.util.ServiceLocator;
 import retrofit2.Call;
@@ -32,14 +34,14 @@ public class NewsRepository implements INewsRepository {
     private final Application application;
     private final NewsApiService newsApiService;
     private final NewsDao newsDao;
-    private final ResponseCallback responseCallback;
+    private final NewsResponseCallback newsResponseCallback;
 
-    public NewsRepository(Application application, ResponseCallback responseCallback) {
+    public NewsRepository(Application application, NewsResponseCallback newsResponseCallback) {
         this.application = application;
         this.newsApiService = ServiceLocator.getInstance().getNewsApiService();
         NewsRoomDatabase newsRoomDatabase = ServiceLocator.getInstance().getNewsDao(application);
         this.newsDao = newsRoomDatabase.newsDao();
-        this.responseCallback = responseCallback;
+        this.newsResponseCallback = newsResponseCallback;
     }
 
     @Override
@@ -63,13 +65,13 @@ public class NewsRepository implements INewsRepository {
                         List<News> newsList = response.body().getNewsList();
                         saveDataInDatabase(newsList);
                     } else {
-                        responseCallback.onFailure(application.getString(R.string.error_retrieving_news));
+                        newsResponseCallback.onFailure(application.getString(R.string.error_retrieving_news));
                     }
                 }
 
                 @Override
                 public void onFailure(@NonNull Call<NewsApiResponse> call, @NonNull Throwable t) {
-                    responseCallback.onFailure(t.getMessage());
+                    newsResponseCallback.onFailure(t.getMessage());
                 }
             });
         } else {
@@ -89,7 +91,7 @@ public class NewsRepository implements INewsRepository {
                 news.setFavorite(false);
             }
             newsDao.updateListFavoriteNews(favoriteNews);
-            responseCallback.onSuccess(newsDao.getFavoriteNews(), System.currentTimeMillis());
+            newsResponseCallback.onSuccess(newsDao.getFavoriteNews(), System.currentTimeMillis());
         });
     }
 
@@ -102,7 +104,7 @@ public class NewsRepository implements INewsRepository {
     public void updateNews(News news) {
         NewsRoomDatabase.databaseWriteExecutor.execute(() -> {
             newsDao.updateSingleFavoriteNews(news);
-            responseCallback.onNewsFavoriteStatusChanged(news);
+            newsResponseCallback.onNewsFavoriteStatusChanged(news);
         });
     }
 
@@ -112,7 +114,7 @@ public class NewsRepository implements INewsRepository {
     @Override
     public void getFavoriteNews() {
         NewsRoomDatabase.databaseWriteExecutor.execute(() -> {
-            responseCallback.onSuccess(newsDao.getFavoriteNews(), System.currentTimeMillis());
+            newsResponseCallback.onSuccess(newsDao.getFavoriteNews(), System.currentTimeMillis());
         });
     }
 
@@ -152,7 +154,7 @@ public class NewsRepository implements INewsRepository {
                 newsList.get(i).setId(insertedNewsIds.get(i));
             }
 
-            responseCallback.onSuccess(newsList, System.currentTimeMillis());
+            newsResponseCallback.onSuccess(newsList, System.currentTimeMillis());
         });
     }
 
@@ -163,7 +165,7 @@ public class NewsRepository implements INewsRepository {
      */
     private void readDataFromDatabase(long lastUpdate) {
         NewsRoomDatabase.databaseWriteExecutor.execute(() -> {
-            responseCallback.onSuccess(newsDao.getAll(), lastUpdate);
+            newsResponseCallback.onSuccess(newsDao.getAll(), lastUpdate);
         });
     }
 }

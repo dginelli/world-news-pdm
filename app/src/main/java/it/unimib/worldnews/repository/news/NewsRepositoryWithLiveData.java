@@ -1,4 +1,4 @@
-package it.unimib.worldnews.repository;
+package it.unimib.worldnews.repository.news;
 
 import static it.unimib.worldnews.util.Constants.FRESH_TIMEOUT;
 
@@ -6,15 +6,17 @@ import android.util.Log;
 
 import androidx.lifecycle.MutableLiveData;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import it.unimib.worldnews.model.News;
 import it.unimib.worldnews.model.NewsApiResponse;
 import it.unimib.worldnews.model.NewsResponse;
 import it.unimib.worldnews.model.Result;
-import it.unimib.worldnews.source.BaseNewsLocalDataSource;
-import it.unimib.worldnews.source.BaseNewsRemoteDataSource;
-import it.unimib.worldnews.source.NewsCallback;
+import it.unimib.worldnews.source.news.BaseFavoriteNewsDataSource;
+import it.unimib.worldnews.source.news.BaseNewsLocalDataSource;
+import it.unimib.worldnews.source.news.BaseNewsRemoteDataSource;
+import it.unimib.worldnews.source.news.NewsCallback;
 
 /**
  * Repository class to get the news from local or from a remote source.
@@ -27,16 +29,20 @@ public class NewsRepositoryWithLiveData implements INewsRepositoryWithLiveData, 
     private final MutableLiveData<Result> favoriteNewsMutableLiveData;
     private final BaseNewsRemoteDataSource newsRemoteDataSource;
     private final BaseNewsLocalDataSource newsLocalDataSource;
+    private final BaseFavoriteNewsDataSource backupDataSource;
 
     public NewsRepositoryWithLiveData(BaseNewsRemoteDataSource newsRemoteDataSource,
-                                      BaseNewsLocalDataSource newsLocalDataSource) {
+                                      BaseNewsLocalDataSource newsLocalDataSource,
+                                      BaseFavoriteNewsDataSource favoriteNewsDataSource) {
 
         allNewsMutableLiveData = new MutableLiveData<>();
         favoriteNewsMutableLiveData = new MutableLiveData<>();
         this.newsRemoteDataSource = newsRemoteDataSource;
         this.newsLocalDataSource = newsLocalDataSource;
+        this.backupDataSource = favoriteNewsDataSource;
         this.newsRemoteDataSource.setNewsCallback(this);
         this.newsLocalDataSource.setNewsCallback(this);
+        this.backupDataSource.setNewsCallback(this);
     }
 
     @Override
@@ -58,14 +64,25 @@ public class NewsRepositoryWithLiveData implements INewsRepositoryWithLiveData, 
     }
 
     @Override
-    public MutableLiveData<Result> getFavoriteNews() {
-        newsLocalDataSource.getFavoriteNews();
+    public MutableLiveData<Result> getFavoriteNews(boolean isFirstLoading) {
+        // The first time the user launches the app, check if she
+        // has previously saved favorite news on the cloud
+        if (isFirstLoading) {
+            backupDataSource.getFavoriteNews();
+        } else {
+            newsLocalDataSource.getFavoriteNews();
+        }
         return favoriteNewsMutableLiveData;
     }
 
     @Override
     public void updateNews(News news) {
         newsLocalDataSource.updateNews(news);
+        if (news.isFavorite()) {
+            backupDataSource.addFavoriteNews(news);
+        } else {
+            backupDataSource.deleteFavoriteNews(news);
+        }
     }
 
     @Override
@@ -87,13 +104,13 @@ public class NewsRepositoryWithLiveData implements INewsRepositoryWithLiveData, 
     @Override
     public void onSuccessFromLocal(NewsApiResponse newsApiResponse) {
         if (allNewsMutableLiveData.getValue() != null && allNewsMutableLiveData.getValue().isSuccess()) {
-            List<News> newsList = ((Result.Success)allNewsMutableLiveData.getValue()).getData().getNewsList();
+            List<News> newsList = ((Result.NewsResponseSuccess)allNewsMutableLiveData.getValue()).getData().getNewsList();
             newsList.addAll(newsApiResponse.getNewsList());
             newsApiResponse.setNewsList(newsList);
-            Result.Success result = new Result.Success(newsApiResponse);
+            Result.NewsResponseSuccess result = new Result.NewsResponseSuccess(newsApiResponse);
             allNewsMutableLiveData.postValue(result);
         } else {
-            Result.Success result = new Result.Success(newsApiResponse);
+            Result.NewsResponseSuccess result = new Result.NewsResponseSuccess(newsApiResponse);
             allNewsMutableLiveData.postValue(result);
         }
     }
@@ -110,18 +127,31 @@ public class NewsRepositoryWithLiveData implements INewsRepositoryWithLiveData, 
         Result allNewsResult = allNewsMutableLiveData.getValue();
 
         if (allNewsResult != null && allNewsResult.isSuccess()) {
-            List<News> oldAllNews = ((Result.Success)allNewsResult).getData().getNewsList();
+            List<News> oldAllNews = ((Result.NewsResponseSuccess)allNewsResult).getData().getNewsList();
             if (oldAllNews.contains(news)) {
                 oldAllNews.set(oldAllNews.indexOf(news), news);
                 allNewsMutableLiveData.postValue(allNewsResult);
             }
         }
-        favoriteNewsMutableLiveData.postValue(new Result.Success(new NewsResponse(favoriteNews)));
+        favoriteNewsMutableLiveData.postValue(new Result.NewsResponseSuccess(new NewsResponse(favoriteNews)));
     }
 
     @Override
-    public void onNewsFavoriteStatusChanged(List<News> news) {
-        favoriteNewsMutableLiveData.postValue(new Result.Success(new NewsResponse(news)));
+    public void onNewsFavoriteStatusChanged(List<News> newsList) {
+
+        List<News> notSynchronizedNewsList = new ArrayList<>();
+
+        for (News news : newsList) {
+            if (!news.isSynchronized()) {
+                notSynchronizedNewsList.add(news);
+            }
+        }
+
+        if (!notSynchronizedNewsList.isEmpty()) {
+            backupDataSource.synchronizeFavoriteNews(notSynchronizedNewsList);
+        }
+
+        favoriteNewsMutableLiveData.postValue(new Result.NewsResponseSuccess(new NewsResponse(newsList)));
     }
 
     @Override
@@ -129,7 +159,7 @@ public class NewsRepositoryWithLiveData implements INewsRepositoryWithLiveData, 
         Result allNewsResult = allNewsMutableLiveData.getValue();
 
         if (allNewsResult != null && allNewsResult.isSuccess()) {
-            List<News> oldAllNews = ((Result.Success)allNewsResult).getData().getNewsList();
+            List<News> oldAllNews = ((Result.NewsResponseSuccess)allNewsResult).getData().getNewsList();
             for (News news : favoriteNews) {
                 if (oldAllNews.contains(news)) {
                     oldAllNews.set(oldAllNews.indexOf(news), news);
@@ -141,8 +171,45 @@ public class NewsRepositoryWithLiveData implements INewsRepositoryWithLiveData, 
         if (favoriteNewsMutableLiveData.getValue() != null &&
                 favoriteNewsMutableLiveData.getValue().isSuccess()) {
             favoriteNews.clear();
-            Result.Success result = new Result.Success(new NewsResponse(favoriteNews));
+            Result.NewsResponseSuccess result = new Result.NewsResponseSuccess(new NewsResponse(favoriteNews));
             favoriteNewsMutableLiveData.postValue(result);
         }
+
+        backupDataSource.deleteAllFavoriteNews();
+    }
+
+    @Override
+    public void onSuccessFromCloudReading(List<News> newsList) {
+        // Favorite news got from Realtime Database the first time
+        if (newsList != null) {
+            for (News news : newsList) {
+                news.setSynchronized(true);
+            }
+            newsLocalDataSource.insertNews(newsList);
+            favoriteNewsMutableLiveData.postValue(new Result.NewsResponseSuccess(new NewsResponse(newsList)));
+        }
+    }
+
+    @Override
+    public void onSuccessFromCloudWriting(News news) {
+        if (news != null && !news.isFavorite()) {
+            news.setSynchronized(false);
+        }
+        newsLocalDataSource.updateNews(news);
+        backupDataSource.getFavoriteNews();
+    }
+
+    @Override
+    public void onSuccessSynchronization() {
+        Log.d(TAG, "News synchronized from remote");
+    }
+
+    @Override
+    public void onFailureFromCloud(Exception exception) {
+    }
+
+    @Override
+    public void onSuccessDeletion() {
+
     }
 }

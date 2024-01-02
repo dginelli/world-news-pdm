@@ -1,4 +1,4 @@
-package it.unimib.worldnews.source;
+package it.unimib.worldnews.source.news;
 
 import static it.unimib.worldnews.util.Constants.API_KEY_ERROR;
 import static it.unimib.worldnews.util.Constants.NEWS_API_TEST_JSON_FILE;

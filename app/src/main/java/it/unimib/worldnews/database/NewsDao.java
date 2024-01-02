@@ -33,21 +33,21 @@ public interface NewsDao {
     @Insert
     void insertAll(News... news);
 
-    @Delete
-    void delete(News news);
-
-    @Query("DELETE FROM news")
-    void deleteAll();
-
-    @Query("DELETE FROM news WHERE is_favorite = 0")
-    void deleteNotFavoriteNews();
-
-    @Delete
-    void deleteAllWithoutQuery(News... news);
-
     @Update
     int updateSingleFavoriteNews(News news);
 
     @Update
     int updateListFavoriteNews(List<News> news);
+
+    @Delete
+    void delete(News news);
+
+    @Delete
+    void deleteAllWithoutQuery(News... news);
+
+    @Query("DELETE FROM news")
+    int deleteAll();
+
+    @Query("DELETE FROM news WHERE is_favorite = 0")
+    void deleteNotFavoriteNews();
 }

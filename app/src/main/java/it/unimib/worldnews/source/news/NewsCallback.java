@@ -1,4 +1,4 @@
-package it.unimib.worldnews.source;
+package it.unimib.worldnews.source.news;
 
 import java.util.List;
 
@@ -17,4 +17,9 @@ public interface NewsCallback {
     void onNewsFavoriteStatusChanged(News news, List<News> favoriteNews);
     void onNewsFavoriteStatusChanged(List<News> news);
     void onDeleteFavoriteNewsSuccess(List<News> favoriteNews);
+    void onSuccessFromCloudReading(List<News> newsList);
+    void onSuccessFromCloudWriting(News news);
+    void onFailureFromCloud(Exception exception);
+    void onSuccessSynchronization();
+    void onSuccessDeletion();
 }

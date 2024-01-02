@@ -1,4 +1,4 @@
-package it.unimib.worldnews.repository;
+package it.unimib.worldnews.repository.news;
 
 import it.unimib.worldnews.model.News;
 

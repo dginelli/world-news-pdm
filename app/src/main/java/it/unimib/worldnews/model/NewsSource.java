@@ -11,6 +11,9 @@ import java.util.Objects;
 public class NewsSource implements Parcelable {
     private String name;
 
+    public NewsSource() {
+    }
+
     public NewsSource(String name) {
         this.name = name;
     }

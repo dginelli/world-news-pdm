@@ -1,4 +1,4 @@
-package it.unimib.worldnews.repository;
+package it.unimib.worldnews.repository.news;
 
 import androidx.lifecycle.MutableLiveData;
 
@@ -13,7 +13,7 @@ public interface INewsRepositoryWithLiveData {
 
     void fetchNews(String country, int page);
 
-    MutableLiveData<Result> getFavoriteNews();
+    MutableLiveData<Result> getFavoriteNews(boolean firstLoading);
 
     void updateNews(News news);
 
