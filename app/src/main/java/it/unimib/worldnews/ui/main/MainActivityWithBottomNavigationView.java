@@ -1,11 +1,9 @@
 package it.unimib.worldnews.ui.main;
 
-import static it.unimib.worldnews.ui.preferences.NewsPreferencesActivity.EXTRA_BUNDLE_INT;
 import static it.unimib.worldnews.ui.preferences.NewsPreferencesActivity.EXTRA_BUTTON_PRESSED_COUNTER_KEY;
 import static it.unimib.worldnews.ui.preferences.NewsPreferencesActivity.EXTRA_NEWS_KEY;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -14,10 +12,12 @@ import androidx.navigation.ui.NavigationUI;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import it.unimib.worldnews.R;
+import it.unimib.worldnews.databinding.ActivityMainWithBottomNavigationViewBinding;
 
 /**
  * Activity that contains Fragments, managed by a BottomNavigationView, that
@@ -27,13 +27,17 @@ public class MainActivityWithBottomNavigationView extends AppCompatActivity {
 
     private static final String TAG = MainActivityWithBottomNavigationView.class.getSimpleName();
 
+    private ActivityMainWithBottomNavigationViewBinding binding;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main_with_bottom_navigation_view);
+        binding = ActivityMainWithBottomNavigationViewBinding.inflate(getLayoutInflater());
 
-        Toolbar toolbar = findViewById(R.id.top_appbar);
-        setSupportActionBar(toolbar);
+        View view = binding.getRoot();
+        setContentView(view);
+
+        setSupportActionBar(binding.topAppbar);
 
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().
                 findFragmentById(R.id.nav_host_fragment);
@@ -53,10 +57,5 @@ public class MainActivityWithBottomNavigationView extends AppCompatActivity {
         Intent intent = getIntent();
         Log.d(TAG, "Times: " + intent.getIntExtra(EXTRA_BUTTON_PRESSED_COUNTER_KEY, 0));
         Log.d(TAG, "News: " + intent.getParcelableExtra(EXTRA_NEWS_KEY));
-
-        Bundle bundle = intent.getExtras();
-        if (bundle != null) {
-            Log.d(TAG, "Int from Bundle " + bundle.getInt(EXTRA_BUNDLE_INT));
-        }
     }
 }
