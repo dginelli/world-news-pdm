@@ -2,6 +2,7 @@
     <string name="app_name">World News</string>
     <string name="logo">Logo Application</string>
     <string name="login" translatable="false">Login</string>
+    <string name="logout" translatable="false">Logout</string>
     <string name="email" translatable="false">E-mail</string>
     <string name="password" translatable="false">Password</string>
     <string name="forgot_password">Forgot password?</string>
@@ -39,8 +40,14 @@
     <string name="alert_text_topic_of_interest">Choose at least one topic of interest</string>
 
     <string name="error_email">Insert a valid email address</string>
-    <string name="error_password">Password cannot be empty</string>
+    <string name="error_password">Password should be at least 6 characters</string>
     <string name="check_login_data_message">Check the data you inserted</string>
+    <string name="error_login_user_message">There is no user record corresponding to this identifier</string>
+    <string name="error_login_password_message">The password is invalid</string>
+    <string name="error_user_collision_message">The email address is already in use by another account</string>
+    <string name="error_no_google_account_found_message">No Google accounts have been found</string>
+
+    <string name="user_data_retrieving_message">Retrieving of user data in progress</string>
 
     <string name="country_news">World</string>
     <string name="topic_news">Topic</string>

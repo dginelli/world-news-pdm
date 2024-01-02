@@ -37,8 +37,14 @@
     <string name="alert_text_topic_of_interest">Scegli almeno un argomento di interesse</string>
 
     <string name="error_email">Inserisci un indirizzo email valido</string>
-    <string name="error_password">La password non può essere vuota</string>
+    <string name="error_password">La password deve contenere almeno 6 caratteri</string>
     <string name="check_login_data_message">Controlla i dati inseriti</string>
+    <string name="error_login_user_message">Non è stato trovato alcun utente corrispondente ai dati inseriti</string>
+    <string name="error_login_password_message">La password non è corretta</string>
+    <string name="error_user_collision_message">L\'indirizzo email è già in uso</string>
+    <string name="error_no_google_account_found_message">Non è stato trovato alcun account Google</string>
+
+    <string name="user_data_retrieving_message">Recupero dei dati in corso</string>
 
     <string name="country_news">Mondo</string>
     <string name="topic_news">Argomento</string>
